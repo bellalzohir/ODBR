@@ -178,18 +178,16 @@ public class ReportEvent {
         else if (GetEventDeviceInfo.getInstance().isMultiTouchA() || GetEventDeviceInfo.getInstance().isTypeSingleTouch()) {
             int state = CLEAN;
             int[] coord = new int[2];
-            coords.put(0, new ArrayList<int[]>());
 
             for (GetEvent e : inputList) {
                 if (down(e)) {
                     coords.put(coords.size(), new ArrayList<int[]>());
-                }
-
-                else if (xPos(e)) {
+                } else if (coords.size() == 0) {
+                    continue;
+                } else if (xPos(e)) {
                     coord[0] = e.getValue();
                     state = DIRTY;
-                }
-                else {
+                } else {
                     if (yPos(e)) {
                         coord[1] = e.getValue();
                         state = DIRTY;
@@ -201,8 +199,7 @@ public class ReportEvent {
                             if (other.size() == 0) {
                                 base = other;
                                 break;
-                            }
-                            else {
+                            } else {
                                 int[] baseCoord = base.get(base.size() - 1);
                                 int[] otherCoord = other.get(other.size() - 1);
                                 if (distance(baseCoord[0], baseCoord[1], coord[0], coord[1]) > distance(otherCoord[0], otherCoord[1], coord[0], coord[1])) {
@@ -216,12 +213,6 @@ public class ReportEvent {
                 }
             }
 
-        }
-
-        // Check to remove common bug where single tap is duplicated
-        if (coords.size() == 2 && coords.get(0).size() == 1 && coords.get(1).size() == 1 &&
-                Arrays.equals(coords.get(0).get(0), coords.get(1).get(0))) {
-            coords.remove(1);
         }
 
         return coords;
