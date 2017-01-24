@@ -209,12 +209,12 @@ public class GetEventManager {
  * parse get event lines in the same way that we initially parse get event logs.
  */
 class GetEvent {
-    private int seconds;
-    private int microseconds;
-    private short type;
-    private short code;
-    private int value;
-    public byte[] test;
+    private transient int seconds;
+    private transient int microseconds;
+    private transient short type;
+    private transient short code;
+    private transient int value;
+    private long time;
 
     public GetEvent(byte[] vals) {
         seconds = toInt(vals[0]) + (toInt(vals[1]) << 8) + (toInt(vals[2]) << 16) + (toInt(vals[3]) << 24);
@@ -222,7 +222,8 @@ class GetEvent {
         type = (short) (toInt(vals[8]) + (toInt(vals[9]) << 8));
         code = (short) (toInt(vals[10]) + (toInt(vals[11]) << 8));
         value = toInt(vals[12]) + (toInt(vals[13]) << 8) + (toInt(vals[14]) << 16) + (toInt(vals[15]) << 24);
-        test = vals;
+        time = (seconds & 0x000FFFFF) * 1000;
+        time += microseconds / 1000;
     }
 
     private int toInt(byte b) {
@@ -260,8 +261,6 @@ class GetEvent {
     }
 
     public long getTimeMillis() {
-        long millis = (seconds & 0x000FFFFF) * 1000;
-        millis += microseconds / 1000;
-        return millis;
+        return time;
     }
 }

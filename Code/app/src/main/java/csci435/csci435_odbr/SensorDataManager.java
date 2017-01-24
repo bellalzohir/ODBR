@@ -64,7 +64,7 @@ public class SensorDataManager implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (!Arrays.equals(lastLoggedData.get(event.sensor), event.values)) {
-            BugReport.getInstance().addSensorData(event.sensor, event);
+            BugReport.getInstance().addSensorData(event.sensor.getName(), event);
             lastLoggedData.put(event.sensor, event.values.clone());
         }
     }

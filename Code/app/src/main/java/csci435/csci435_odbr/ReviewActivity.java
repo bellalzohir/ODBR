@@ -1,33 +1,19 @@
 package csci435.csci435_odbr;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.media.Image;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.view.PagerAdapter;
 import android.util.Log;
 import android.util.SparseArray;
-import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.Window;
-import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.support.v4.view.ViewPager;
 import android.support.v4.app.FragmentStatePagerAdapter;
@@ -38,8 +24,6 @@ import android.hardware.Sensor;
 import android.graphics.Canvas;
 import android.widget.ToggleButton;
 
-import java.io.File;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 /**
@@ -102,7 +86,7 @@ public class ReviewActivity extends FragmentActivity {
     }
 
     public void returnToRecordActivity(View view) {
-        Intent intent = new Intent(this, RecordActivity.class);
+        Intent intent = new Intent(this, ReportActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
         startActivity(intent);
         finish();
@@ -243,7 +227,7 @@ public class ReviewActivity extends FragmentActivity {
             if (s != null) {
                 sensorTitle.setText("(" + (pos + 1) + "/" + max + ")  " + s.getName());
                 ImageView sensorGraph = (ImageView) rootView.findViewById(R.id.sensorGraph);
-                sensorGraph.setImageBitmap(BugReport.getInstance().drawSensorData(s));
+                sensorGraph.setImageBitmap(BugReport.getInstance().drawSensorData(s.getName()));
             }
             return rootView;
         }

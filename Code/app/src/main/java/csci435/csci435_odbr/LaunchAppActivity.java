@@ -40,11 +40,11 @@ import android.hardware.Sensor;
  *  --Installed applications are limited to those with a launch intent
  * The user may select an app from the list or narrow the list using the search bar.
  * Should the user select an app, a confirmation dialog will be displayed.
- *  --Upon confirmation, hand-off to RecordActivity.
+ *  --Upon confirmation, hand-off to ReportActivity.
  *
  *  Collaborators:
  *      --Globals: stores a handle to the application being reported
- *      --RecordActivity: launched upon selection of an app to report
+ *      --ReportActivity: launched upon selection of an app to report
  *      --InstalledApplicationsAdapter: Handles the display of installed applications in the list
  */
 public class LaunchAppActivity extends Activity {
@@ -183,7 +183,7 @@ public class LaunchAppActivity extends Activity {
 
 
     /**
-     * startRecording sets the Global application handle and launches RecordActivity
+     * startRecording sets the Global application handle and launches ReportActivity
      * @param appName the name of the application
      */
     private void startRecording(String appName) {

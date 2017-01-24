@@ -14,12 +14,16 @@ import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.widget.ImageView;
 import android.widget.EditText;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import java.io.OutputStream;
 
 /**
- * RecordActivity handles the visual recording and submitting the bug report
+ * ReportActivity handles the visual recording and submitting the bug report
  */
-public class RecordActivity extends ActionBarActivity {
+public class ReportActivity extends ActionBarActivity {
     private EditText reporterName;
     private EditText reportTitle;
     private EditText desiredOutcome;
@@ -29,7 +33,7 @@ public class RecordActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setContentView(R.layout.activity_record);
+        setContentView(R.layout.activity_report);
 
         //Get handles to edit texts
         reporterName = (EditText) findViewById(R.id.reporterNameEditText);
@@ -84,17 +88,17 @@ public class RecordActivity extends ActionBarActivity {
      * --"What does happen"
      */
     private void updateBugReport() {
-        BugReport.getInstance().setReporterName(reporterName.getText().toString());
+        BugReport.getInstance().setName(reporterName.getText().toString());
         BugReport.getInstance().setTitle(reportTitle.getText().toString());
-        BugReport.getInstance().setDesiredOutcome(desiredOutcome.getText().toString());
-        BugReport.getInstance().setActualOutcome(actualOutcome.getText().toString());
+        BugReport.getInstance().setDescription_desired_outcome(desiredOutcome.getText().toString());
+        BugReport.getInstance().setDescription_actual_outcome(actualOutcome.getText().toString());
     }
 
     private void fillDescriptions(){
-        reporterName.setText(BugReport.getInstance().getReporterName());
+        reporterName.setText(BugReport.getInstance().getName());
         reportTitle.setText(BugReport.getInstance().getTitle());
-        desiredOutcome.setText(BugReport.getInstance().getDesiredOutcome());
-        actualOutcome.setText(BugReport.getInstance().getActualOutcome());
+        desiredOutcome.setText(BugReport.getInstance().getDescription_desired_outcome());
+        actualOutcome.setText(BugReport.getInstance().getDescription_actual_outcome());
     }
 
     /**
@@ -126,7 +130,7 @@ public class RecordActivity extends ActionBarActivity {
 
             clear_app_data.waitFor();
 
-        } catch (Exception e){Log.e("RecordActivity", "Error clearing stored app data");}
+        } catch (Exception e){Log.e("ReportActivity", "Error clearing stored app data");}
 
         Intent intent = new Intent(this, ReplayService.class);
         startService(intent);
@@ -145,8 +149,14 @@ public class RecordActivity extends ActionBarActivity {
     public void submitReport(View view) throws Exception {
         updateBugReport();
 
-        //JSON model tester
-        new JsonModel().tester();
+        try {
+            GsonBuilder builder = new GsonBuilder();
+            builder.registerTypeAdapter(ReportEvent.class, new ReportEventSerializer());
+            Gson gson = builder.setPrettyPrinting().create();
+            System.out.println(gson.toJson(BugReport.getInstance()));
+        } catch (Exception e) {
+
+        }
 
         BugReport.getInstance().clearReport();
         Intent intent = new Intent(this, LaunchAppActivity.class);

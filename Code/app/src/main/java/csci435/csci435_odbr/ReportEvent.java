@@ -1,18 +1,31 @@
 package csci435.csci435_odbr;
 
-import android.util.Log;
+import android.graphics.Bitmap;
+
+import android.util.Base64;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
 
-import org.w3c.dom.Node;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileReader;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 
 /**
- * Created by Rich on 4/22/16.
+ * Created by Richard Bonett on 4/22/16.
  * A Report Event is our classification for a singular event. Each Report Event will have a screenshot, a hierarchy,
  * and then multiple getevent lines associated with it until the trace reaches a point where that specific report event
  * has finished. The Report Event interacts with the GetEventDeviceInfo to get appropriate data on the device and the
@@ -26,75 +39,81 @@ import java.util.HashMap;
 public class ReportEvent {
     short EV_ABS = 3;
 
-    private long timeUntilNextEvent;
-    private Screenshot screenShot;
-    private HierarchyDump dump;
-    private ArrayList<GetEvent> inputs; //[time, x, y]
+    private Screenshot screenshot;
+    private HierarchyDump hierarchy;
+    private ArrayList<GetEvent> inputList;
+    private SparseArray<ArrayList<int[]>> coords;
+    private String description = "";
+    private long event_start_time = 0;
+    private long event_end_time = 0;
     private String device;
-    int idNum;
 
     public ReportEvent(String device) {
         this.device = device;
-        inputs = new ArrayList<GetEvent>();
+        inputList = new ArrayList<GetEvent>();
     }
 
     public void addScreenshot(Screenshot s) {
-        screenShot = s;
+        screenshot = s;
     }
 
     public void addHierarchyDump(HierarchyDump d) {
-        dump = d;
+        hierarchy = d;
     }
 
     public void addGetEvent(GetEvent e) {
-        inputs.add(e);
+        if (inputList.isEmpty()) {
+            event_start_time = e.getTimeMillis();
+        }
+        event_end_time = e.getTimeMillis();
+        inputList.add(e);
     }
 
     public String getData() {
-        return "Time: " + getStartTime() + " | Screenshot: " + screenShot.getFilename() + " | Dump: " + dump.getFilename();
+        return "Time: " + getStartTime() + " | Screenshot: " + screenshot.getFilename() + " | Dump: " + hierarchy.getFilename();
     }
 
     public String getEventDescription() {
-        String desc = "";
-
-        SparseArray<ArrayList<int[]>> coords = getInputCoordinates();
-        if (coords.size() > 1) {
-            desc += "Multitouch";
+        if (!("".equals(description))) {
+            return description;
         }
+        coords = getInputCoordinates();
 
+        if (coords.size() > 1) {
+            description += "Multitouch";
+        }
         else if (coords.valueAt(0).size() < 3) {
             int[] coord = coords.valueAt(0).get(0);
-            desc += "User clicked at X:" + coord[0] + " |Y: " + coord[1];
+            description += "User clicked at X:" + coord[0] + " |Y: " + coord[1];
         }
         else {
             int[] start = coords.valueAt(0).get(0);
             int[] end = coords.valueAt(0).get(coords.valueAt(0).size() - 1);
-            desc += "User swiped from X: " + start[0] + " |Y: " + start[1] + " | to X: " + end[0] + " |Y: " + end[1];
+            description += "User swiped from X: " + start[0] + " |Y: " + start[1] + " | to X: " + end[0] + " |Y: " + end[1];
         }
-        return desc;
+        return description;
     }
 
 
     public Screenshot getScreenshot() {
-        return screenShot;
+        return screenshot;
     }
 
     public HierarchyDump getHierarchy() {
-        return dump;
+        return hierarchy;
     }
 
-
     public ArrayList<GetEvent> getInputEvents() {
-        return inputs;
+        return inputList;
     }
 
 
     public long getStartTime() {
-        return inputs.get(0).getTimeMillis();
+        return event_start_time;
     }
 
     public long getDuration() {
-        return inputs.get(inputs.size() - 1).getTimeMillis() - getStartTime();
+        return event_end_time - event_start_time;
     }
 
     public String getDevice() {
@@ -106,7 +125,11 @@ public class ReportEvent {
      * @return a list of lists, where each list contains the coordinates for one touch input
      */
     public SparseArray<ArrayList<int[]>> getInputCoordinates() {
-        SparseArray<ArrayList<int[]>> traces = new SparseArray<ArrayList<int[]>>();
+        if (coords != null) {
+            return coords;
+        }
+
+        coords = new SparseArray<ArrayList<int[]>>();
         int NOT_FOUND = -1;
         int CLEAN = 0;
         int DIRTY = 1;
@@ -118,30 +141,30 @@ public class ReportEvent {
          * clean is when there is.
          */
         if (GetEventDeviceInfo.getInstance().isMultiTouchB()) {
-            SparseArray<int[]> coords = new SparseArray<int[]>();
+            SparseArray<int[]> trace = new SparseArray<int[]>();
             SparseIntArray slots = new SparseIntArray();
             int activeSlot = 0;
 
-            coords.put(activeSlot, new int[]{-1, -1});
-            traces.put(activeSlot, new ArrayList<int[]>());
+            trace.put(activeSlot, new int[]{-1, -1});
+            coords.put(activeSlot, new ArrayList<int[]>());
 
-            for (GetEvent e : inputs) {
+            for (GetEvent e : inputList) {
                 if (slot(e)) {
                     activeSlot = e.getValue();
                     if (slots.get(activeSlot, NOT_FOUND) == NOT_FOUND) {
-                        coords.put(activeSlot, new int[]{-1, -1});
-                        traces.put(activeSlot, new ArrayList<int[]>());
+                        trace.put(activeSlot, new int[]{-1, -1});
+                        coords.put(activeSlot, new ArrayList<int[]>());
                     }
                 }
                 if (xPos(e)) {
-                    coords.get(activeSlot)[0] = e.getValue();
+                    trace.get(activeSlot)[0] = e.getValue();
                     slots.put(activeSlot, DIRTY);
                 } else if (yPos(e)) {
-                    coords.get(activeSlot)[1] = e.getValue();
-                    traces.get(activeSlot).add(coords.get(activeSlot).clone());
+                    trace.get(activeSlot)[1] = e.getValue();
+                    coords.get(activeSlot).add(trace.get(activeSlot).clone());
                     slots.put(activeSlot, CLEAN);
                 } else if (slots.get(activeSlot) == DIRTY) {
-                    traces.get(activeSlot).add(coords.get(activeSlot).clone());
+                    coords.get(activeSlot).add(trace.get(activeSlot).clone());
                     slots.put(activeSlot, CLEAN);
                 }
             }
@@ -155,11 +178,11 @@ public class ReportEvent {
         else if (GetEventDeviceInfo.getInstance().isMultiTouchA() || GetEventDeviceInfo.getInstance().isTypeSingleTouch()) {
             int state = CLEAN;
             int[] coord = new int[2];
-            traces.put(0, new ArrayList<int[]>());
+            coords.put(0, new ArrayList<int[]>());
 
-            for (GetEvent e : inputs) {
+            for (GetEvent e : inputList) {
                 if (down(e)) {
-                    traces.put(traces.size(), new ArrayList<int[]>());
+                    coords.put(coords.size(), new ArrayList<int[]>());
                 }
 
                 else if (xPos(e)) {
@@ -172,9 +195,9 @@ public class ReportEvent {
                         state = DIRTY;
                     }
                     if (state == DIRTY) {
-                        ArrayList<int[]> base = traces.valueAt(0);
-                        for (int trace = 0; trace < traces.size(); trace++) {
-                            ArrayList<int[]> other = traces.valueAt(trace);
+                        ArrayList<int[]> base = coords.valueAt(0);
+                        for (int trace = 0; trace < coords.size(); trace++) {
+                            ArrayList<int[]> other = coords.valueAt(trace);
                             if (other.size() == 0) {
                                 base = other;
                                 break;
@@ -195,7 +218,13 @@ public class ReportEvent {
 
         }
 
-        return traces;
+        // Check to remove common bug where single tap is duplicated
+        if (coords.size() == 2 && coords.get(0).size() == 1 && coords.get(1).size() == 1 &&
+                Arrays.equals(coords.get(0).get(0), coords.get(1).get(0))) {
+            coords.remove(1);
+        }
+
+        return coords;
     }
 
 

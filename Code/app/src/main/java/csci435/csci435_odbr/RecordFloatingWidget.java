@@ -82,7 +82,7 @@ public class RecordFloatingWidget extends Service {
     public void submitReport(View v) {
         ll.setVisibility(View.GONE);
         Intent intent = new Intent();
-        intent.setClass(this, RecordActivity.class);
+        intent.setClass(this, ReportActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
         onDestroy();
