@@ -19,6 +19,7 @@ public class Globals {
     public static int height;
     public static int availableHeightForImage;
     public static long time_last_event;
+    public static String databaseURL = "";
 
     /**
      * Description of the data contained within each sensor's float[]

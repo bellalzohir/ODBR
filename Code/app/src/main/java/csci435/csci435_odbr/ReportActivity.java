@@ -1,6 +1,7 @@
 package csci435.csci435_odbr;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.content.Intent;
@@ -19,6 +20,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
  * ReportActivity handles the visual recording and submitting the bug report
@@ -153,7 +157,9 @@ public class ReportActivity extends ActionBarActivity {
             GsonBuilder builder = new GsonBuilder();
             builder.registerTypeAdapter(ReportEvent.class, new ReportEventSerializer());
             Gson gson = builder.setPrettyPrinting().create();
-            System.out.println(gson.toJson(BugReport.getInstance()));
+            String json = gson.toJson(BugReport.getInstance());
+            AsyncHttpPut asyncHttpPut = new AsyncHttpPut(json);
+            asyncHttpPut.execute(Globals.databaseURL + Long.toString(System.currentTimeMillis()), json);
         } catch (Exception e) {
 
         }
@@ -163,5 +169,53 @@ public class ReportActivity extends ActionBarActivity {
         intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
         startActivity(intent);
         finish();
+    }
+
+    /**
+     * Used to send an async HTTP put request to the designated server
+     */
+    //http://stackoverflow.com/questions/7860538/android-http-post-asynctask
+    class AsyncHttpPut extends AsyncTask<String, String, String> {
+
+        private String mData;
+
+        /**
+         * constructor
+         */
+        public AsyncHttpPut(String data) {
+            mData = data;
+        }
+
+        /**
+         * background
+         */
+        @Override
+        protected String doInBackground(String... params) {
+            URL url = null;
+            try {
+                url = new URL(params[0]);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("PUT");
+                connection.setDoOutput(true);
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setRequestProperty("Accept", "application/json");
+                OutputStreamWriter osw = new OutputStreamWriter(connection.getOutputStream());
+                osw.write(params[1]);
+                osw.flush();
+                osw.close();
+                System.err.println(connection.getResponseCode());
+                System.err.println(params[0]);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return "1";
+        }
+
+        /**
+         * on getting result
+         */
+        @Override
+        protected void onPostExecute(String result) {
+        }
     }
 }
