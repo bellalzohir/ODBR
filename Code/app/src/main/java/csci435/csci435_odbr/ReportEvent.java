@@ -1,28 +1,9 @@
 package csci435.csci435_odbr;
 
-import android.graphics.Bitmap;
-
-import android.util.Base64;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
-
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileReader;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Created by Richard Bonett on 4/22/16.

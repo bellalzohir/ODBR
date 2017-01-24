@@ -1,29 +1,13 @@
 package csci435.csci435_odbr;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 
-import android.graphics.BitmapFactory;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.AsyncTask;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
-import android.graphics.Canvas;
-import android.os.Environment;
 import android.view.OrientationEventListener;
-import android.view.View;
-import android.app.ActivityManager;
 import android.content.Context;
-import android.util.Log;
 import android.hardware.Sensor;
 
 /**

@@ -1,7 +1,5 @@
 package csci435.csci435_odbr;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.content.Intent;

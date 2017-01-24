@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
