@@ -4,6 +4,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.util.SparseArray;
 
+import java.io.File;
 import java.util.ArrayList;
 
 /**
@@ -20,6 +21,9 @@ public class Globals {
     public static int availableHeightForImage;
     public static long time_last_event;
     public static String databaseURL = "";
+    public static String baseDirectory = "sdcard" + File.separator + "ODBR";
+    public static String hierarchyDumpDirectory = baseDirectory + File.separator + "HierarchyDumps" + File.separator;
+    public static String screenshotDirectory = baseDirectory + File.separator + "Screenshots" + File.separator;
 
     /**
      * Description of the data contained within each sensor's float[]

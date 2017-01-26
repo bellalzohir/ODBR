@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -61,11 +62,11 @@ public class BugReport {
     }
 
     //adds a sensor 'event' to a specific sensor
-    public void addSensorData(String s, SensorEvent e) {
-        if (!sensorData.containsKey(s)) {
-            sensorData.put(s, new SensorDataList());
+    public void addSensorData(Sensor s, SensorEvent e) {
+        if (!sensorData.containsKey(s.getName())) {
+            sensorData.put(s.getName(), new SensorDataList(s.getType()));
         }
-        sensorData.get(s).addData(e.timestamp, e.values.clone());
+        sensorData.get(s.getName()).addData(e.timestamp, e.values.clone());
     }
 
     public void addOrientation(long time, int orientation) {
@@ -170,12 +171,14 @@ public class BugReport {
  */
 class SensorDataList {
     private ArrayList<SensorDataContainer> values;
+    private String[] valueDescriptions;
     private transient float[] valueSums;
     private transient int numItems;
 
-    public SensorDataList() {
+    public SensorDataList(int sensorType) {
         values = new ArrayList<SensorDataContainer>();
         numItems = 0;
+        valueDescriptions = Globals.sensorDescription.get(sensorType, new String[] {""});
     }
 
     public void addData(long timestamp, float[] value) {
