@@ -2,9 +2,24 @@ package csci435.csci435_odbr;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.provider.ContactsContract;
 import android.util.Log;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -38,35 +53,115 @@ public class ReplayService extends IntentService {
 
 
     class ReplayEvent implements Runnable {
-        private long wait_time = 2000; //Milliseconds before starting inputs and after returning to report
+        private long wait_before = 1000; //Milliseconds to wait before starting inputs
+        private long wait_after = 2000; //Milliseconds to wait after returning to report
         @Override
         public void run() {
-            String cmd = "";
             try {
-                Thread.sleep(wait_time);
-                long time = BugReport.getInstance().getEventAtIndex(0).getInputEvents().get(0).getTimeMillis();
-                for (ReportEvent event : BugReport.getInstance().getEventList()) {
-                    for (GetEvent e : event.getInputEvents()) {
-                        long waitfor = System.currentTimeMillis() + (e.getTimeMillis() - time);
-                        while (System.currentTimeMillis() < waitfor) {}
-                        //Inefficient to be sure, but more accurate results than Thread.sleep(), and
-                        //ScheduledThreadExecutor was not playing well, ToDo: replace while block
-                        os.write((e.getSendEvent(event.getDevice()) + "\n").getBytes("ASCII"));
-                        os.flush();
-                        time = e.getTimeMillis();
+                Thread.sleep(wait_before);
+                long previousEventTime = BugReport.getInstance().getStartTime();
+                ArrayList<SendEventBundle> events = preprocessEvents();
+                long waitUntil = 0;
+                long curTime;
+
+                //Grant permissions to directly write to device
+                os.write("chmod 777 /dev/input/event5 \n".getBytes("ASCII"));
+                os.flush();
+                HashMap<String, DataOutputStream> devices = new HashMap<String, DataOutputStream>();
+
+                for (String device : getDevices()) {
+                    devices.put(device, new DataOutputStream(new BufferedOutputStream(
+                            new FileOutputStream(new File(device)))));
+                }
+
+                DataOutputStream out;
+                for (SendEventBundle bundle : events) {
+                    out = devices.get(bundle.device);
+                    while ((curTime = System.currentTimeMillis()) < waitUntil) {/* <(^_^)> */}
+                    for (byte[] cmd : bundle.commands) {
+                        out.write(cmd);
                     }
+                    out.flush();
+                    waitUntil = curTime + (bundle.timeMillis - previousEventTime);
+                    previousEventTime = bundle.timeMillis;
+                }
+                for (DataOutputStream outputStream : devices.values()) {
+                    outputStream.close();
                 }
                 os.close();
                 su_replay.waitFor();
-                Thread.sleep(wait_time);
-            } catch (Exception e) {Log.e("ReplayService", "Unable to replay event: " + cmd);}
+                Thread.sleep(wait_after);
+            } catch (Exception e) {
+                Log.e("ReplayService", "Unable to replay event: " + e.getMessage());
+            }
 
             Intent record_intent = new Intent(ReplayService.this, ReportActivity.class);
             record_intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             record_intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
             startActivity(record_intent);
         }
+
+
+        public String[] getDevices() {
+            Set<String> devices = new HashSet<String>();
+            for (ReportEvent event : BugReport.getInstance().getEventList()) {
+                devices.add(event.getDevice());
+            }
+            return devices.toArray(new String[devices.size()]);
+        }
+
+
+        public ArrayList<SendEventBundle> preprocessEvents() {
+            ArrayList<SendEventBundle> events =  new ArrayList<SendEventBundle>();
+            ArrayList<GetEvent> buffer = new ArrayList<GetEvent>();
+            String device = "";
+            long time = 0;
+            for (ReportEvent event : BugReport.getInstance().getEventList()) {
+                device = event.getDevice();
+                for (GetEvent e : event.getInputEvents()) {
+                    if (buffer.isEmpty() || time == e.getTimeMillis()) {
+                        buffer.add(e);
+                    }
+                    else {
+                        events.add(makeBundle(buffer, device));
+                        buffer.clear();
+                        buffer.add(e);
+                    }
+                    time = e.getTimeMillis();
+                }
+            }
+            if (!buffer.isEmpty()) {
+                events.add(makeBundle(buffer, device));
+                buffer.clear();
+            }
+            return events;
+        }
+
+
+        public SendEventBundle makeBundle(ArrayList<GetEvent> events, String device) {
+            byte[][] eventBundle = new byte[events.size()][];
+            for (int i = 0; i < events.size(); ++i) {
+                try {
+                    eventBundle[i] = events.get(i).getBytes();
+                } catch (Exception err) {
+                    Log.e("ReplayService", "Unexpected error in preprocess: " + err.getMessage());
+                }
+            }
+            return new SendEventBundle(device, eventBundle, events.get(0).getTimeMillis());
+        }
+
+
+        class SendEventBundle {
+            public String device;
+            public byte[][] commands;
+            public long timeMillis;
+
+            public SendEventBundle(String device, byte[][] commands, long timeMillis) {
+                this.device = device;
+                this.commands = commands;
+                this.timeMillis = timeMillis;
+            }
+        }
+
     }
-
-
 }

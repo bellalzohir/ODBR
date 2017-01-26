@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.Process;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -209,21 +210,10 @@ public class GetEventManager {
  * parse get event lines in the same way that we initially parse get event logs.
  */
 class GetEvent {
-    private transient int seconds;
-    private transient int microseconds;
-    private transient short type;
-    private transient short code;
-    private transient int value;
-    private long time;
+    private transient byte[] bytes;
 
-    public GetEvent(byte[] vals) {
-        seconds = toInt(vals[0]) + (toInt(vals[1]) << 8) + (toInt(vals[2]) << 16) + (toInt(vals[3]) << 24);
-        microseconds = toInt(vals[4]) + (toInt(vals[5]) << 8) + (toInt(vals[6]) << 16) + (toInt(vals[7]) << 24);
-        type = (short) (toInt(vals[8]) + (toInt(vals[9]) << 8));
-        code = (short) (toInt(vals[10]) + (toInt(vals[11]) << 8));
-        value = toInt(vals[12]) + (toInt(vals[13]) << 8) + (toInt(vals[14]) << 16) + (toInt(vals[15]) << 24);
-        time = (seconds & 0x000FFFFF) * 1000;
-        time += microseconds / 1000;
+    public GetEvent(byte[] bytes) {
+        this.bytes = bytes.clone();
     }
 
     private int toInt(byte b) {
@@ -232,35 +222,50 @@ class GetEvent {
 
     @Override
     public String toString() {
-        return String.format("[%d.%06d] %04x %04x %08x", seconds, microseconds, type, code, value);
+        return String.format("[%d.%06d] %04x %04x %08x", getSeconds(), getMicroseconds(), getType(), getCode(), getValue());
     }
 
     public String toString(String device) {
-        return String.format("[%d.%06d] %s: %04x %04x %08x", seconds, microseconds, device, type, code, value);
+        return String.format("[%d.%06d] %s: %04x %04x %08x", getSeconds(), getMicroseconds(), device, getType(), getCode(), getValue());
     }
 
     public String toStringInts(String device) {
-        return String.format("[%d.%06d] %s: %d %d %d", seconds, microseconds, device, type, code, value);
+        return String.format("[%d.%06d] %s: %d %d %d", getSeconds(), getMicroseconds(), device, getType(), getCode(), getValue());
     }
 
     public String getSendEvent(String device) {
-        return String.format("sendevent %s %d %d %d", device, type, code, value);
+        return String.format("sendevent %s %d %d %d", device, getType(), getCode(), getValue());
     }
 
+    public byte[] getBytes() {
+        return bytes;
+    }
 
     public short getType() {
-        return type;
+        return (short) (toInt(bytes[8]) + (toInt(bytes[9]) << 8));
     }
 
     public short getCode() {
-        return code;
+        return (short) (toInt(bytes[10]) + (toInt(bytes[11]) << 8));
     }
 
     public int getValue() {
-        return value;
+        return toInt(bytes[12]) + (toInt(bytes[13]) << 8) + (toInt(bytes[14]) << 16) + (toInt(bytes[15]) << 24);
     }
 
     public long getTimeMillis() {
+        long time = (getSeconds() & 0x000FFFFF) * 1000;
+        time += getMicroseconds() / 1000;
         return time;
     }
+
+    public long getMicroseconds() {
+        return toInt(bytes[4]) + (toInt(bytes[5]) << 8) + (toInt(bytes[6]) << 16) + (toInt(bytes[7]) << 24);
+    }
+
+    public long getSeconds() {
+        return toInt(bytes[0]) + (toInt(bytes[1]) << 8) + (toInt(bytes[2]) << 16) + (toInt(bytes[3]) << 24);
+    }
+
+
 }

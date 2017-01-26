@@ -139,6 +139,9 @@ public class BugReport {
     }
 
     /* Getters */
+    public long getStartTime() {
+        return eventList.get(0).getStartTime();
+    }
     public String getName() {
         return name;
     }
