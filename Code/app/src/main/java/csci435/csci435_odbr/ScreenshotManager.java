@@ -9,9 +9,13 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.io.OutputStream;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Rich on 4/23/16.
@@ -26,11 +30,12 @@ public class ScreenshotManager {
     private String filename;
     private int screenshot_index;
     private Process process;
+    private BlockingQueue<Runnable> taskQueue;
 
 
-    public ScreenshotManager() {
+    public ScreenshotManager(String directory) {
         screenshot_index = 0;
-        directory = "sdcard/Screenshots/";
+        this.directory = directory;
         filename = "screenshot" + screenshot_index + ".png";
         File dir = new File(directory);
         if (dir.exists()) {
@@ -39,13 +44,14 @@ public class ScreenshotManager {
             }
         }
         else {
-            dir.mkdir();
+            dir.mkdirs();
         }
     }
 
 
     public void initialize() {
-        service = Executors.newCachedThreadPool();
+        taskQueue = new ArrayBlockingQueue<Runnable>(1);
+        service = new ThreadPoolExecutor(1, 1, 1, TimeUnit.SECONDS, taskQueue);
         try {
             process = Runtime.getRuntime().exec("su", null, null);
         } catch (Exception e) {Log.e("ScreenshotTask", "Could not start process! Check su permissions.");}
@@ -64,11 +70,17 @@ public class ScreenshotManager {
      * Otherwise, starts to process a new Screenshot, returning a reference to this new one.
      * @return Most recently processed Screenshot object
      */
-    public Screenshot takeScreenshot() {
-        screenshot_index += 1;
-        filename = "screenshot" + screenshot_index + ".png";
-        currentTask = service.submit(new ScreenshotTask(directory + filename));
+    public Screenshot takeScreenshot() throws Exception {
+        if (service == null) {
+            throw new Exception("ScreenshotDumpManager not initialized");
+        }
+        if (taskQueue.isEmpty()) {
+            screenshot_index += 1;
+            filename = "screenshot" + screenshot_index + ".png";
+            currentTask = service.submit(new ScreenshotTask(directory + filename));
+        }
         return new Screenshot(directory + filename);
+
     }
 
     /**
@@ -77,6 +89,7 @@ public class ScreenshotManager {
     class ScreenshotTask implements Runnable {
 
         private String file;
+        private int MIN_INTERVAL = 300;
 
         public ScreenshotTask(String filename) {
             this.file = filename;
@@ -86,9 +99,12 @@ public class ScreenshotManager {
         public void run() {
             OutputStream os = process.getOutputStream();
             try {
-                os.write(("/system/bin/screencap -p " + file + "& \n").getBytes("ASCII"));
+                os.write(("/system/bin/screencap -p " + file + " & \n").getBytes("ASCII"));
                 os.flush();
-                process.waitFor();
+                do {
+                    Thread.sleep(MIN_INTERVAL);
+                }
+                while (!(new File(file).exists()));
             } catch (Exception e) {
                 Log.e("ScreenshotTask", "Error taking screenshot.");
             }

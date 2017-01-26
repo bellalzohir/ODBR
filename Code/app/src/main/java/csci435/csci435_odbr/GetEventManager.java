@@ -37,8 +37,8 @@ public class GetEventManager {
         recording = false;
         service = Executors.newCachedThreadPool();
         processes = new ArrayList<Process>();
-        sm = new ScreenshotManager();
-        hdm = new HierarchyDumpManager();
+        sm = new ScreenshotManager(Globals.screenshotDirectory);
+        hdm = new HierarchyDumpManager(Globals.hierarchyDumpDirectory);
     }
 
     /**

@@ -1,6 +1,9 @@
 package csci435.csci435_odbr;
 
+import android.accessibilityservice.AccessibilityService;
 import android.util.Log;
+import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -8,9 +11,17 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -20,14 +31,17 @@ import javax.xml.parsers.DocumentBuilderFactory;
  * calling uiautomator to create a dump at the file location.
  */
 public class HierarchyDumpManager {
-    private ExecutorService service;
+    private ThreadPoolExecutor service;
+    private Process process;
     private String directory;
     private String filename;
     private int dump_index;
+    private BlockingQueue<Runnable> taskQueue;
 
-    public HierarchyDumpManager() {
+
+    public HierarchyDumpManager(String directory) {
         dump_index = 0;
-        directory = "sdcard/HierarchyDumps/";
+        this.directory = directory;
         filename = "dump" + dump_index + ".xml";
         File dir = new File(directory);
         if (dir.exists()) {
@@ -36,10 +50,26 @@ public class HierarchyDumpManager {
             }
         }
         else {
-            dir.mkdir();
+            dir.mkdirs();
         }
     }
 
+
+    public void initialize() {
+        taskQueue = new ArrayBlockingQueue<Runnable>(1);
+        service = new ThreadPoolExecutor(1, 1, 1, TimeUnit.SECONDS, taskQueue);
+        try {
+            process = Runtime.getRuntime().exec("su", null, null);
+        } catch (Exception e) {Log.e("HierarchyDumpTask", "Could not start process! Check su permissions.");}
+    }
+
+
+    public void destroy() {
+        try {
+            service.shutdown();
+            process.destroy();
+        } catch (Exception e) {Log.e("HierarchyDumpManager", "Could not destroy process: " + e.getMessage());}
+    }
 
     /**
      * Returns a new HierachyDump of the current view hierarchy if initialized,
@@ -48,13 +78,15 @@ public class HierarchyDumpManager {
      * @throws Exception : manager is not initialized
      */
     public HierarchyDump takeHierarchyDump() throws Exception {
-        if (service != null) {
+        if (service == null) {
+            throw new Exception("HierarchyDumpManager not initialized");
+        }
+        if (taskQueue.isEmpty()) {
             dump_index += 1;
             filename = "dump" + dump_index + ".xml";
             service.submit(new HierarchyDumpTask(directory + filename));
-            return new HierarchyDump(directory + filename);
         }
-        throw new Exception("HierarchyDumpManager not initialized");
+        return new HierarchyDump(directory + filename);
     }
 
 
@@ -64,6 +96,7 @@ public class HierarchyDumpManager {
     class HierarchyDumpTask implements Runnable {
 
         private String filename;
+        private int MIN_INTERVAL = 300;
 
         public HierarchyDumpTask(String filename) {
             this.filename = filename;
@@ -72,35 +105,19 @@ public class HierarchyDumpManager {
         @Override
         public void run() {
             try {
-                Process process = Runtime.getRuntime().exec("su", null, null);
                 OutputStream os = process.getOutputStream();
-                os.write(("/system/bin/uiautomator dump " + filename + " & \n").getBytes("ASCII"));
+                Log.v("HDM", "Starting " + filename + " " + System.currentTimeMillis());
+                os.write(("/system/bin/uiautomator dump " + filename + " >/dev/null & \n").getBytes("ASCII"));
                 os.flush();
-                os.close();
-                process.waitFor();
-                process.destroy();
+                do {
+                    Thread.sleep(MIN_INTERVAL);
+                }
+                while (!(new File(filename).exists()));
+                Log.v("HDM", "Finished " + filename + " " + System.currentTimeMillis());
             } catch (Exception e) {
                 Log.e("HierarchyDumpTask", "Error taking Hierarchy Dump: " + e.getMessage());
             }
         }
-    }
-
-
-    /**
-     * Initializes the manager, starting a new SuperUser process and ExecutorService
-     */
-    public void initialize() {
-        service = Executors.newCachedThreadPool();
-    }
-
-
-    /**
-     * Stops the process for the Hierarchy Dump Manager
-     */
-    public void destroy() {
-        try {
-            service.shutdown();
-        } catch (Exception e) {Log.v("HierarchyDumpManager", "Could not destroy: " + e.getMessage());}
     }
 }
 
