@@ -64,12 +64,12 @@ public class ReplayService extends IntentService {
                 long waitUntil = 0;
                 long curTime;
 
-                //Grant permissions to directly write to device
-                os.write("chmod 777 /dev/input/event5 \n".getBytes("ASCII"));
-                os.flush();
-                HashMap<String, DataOutputStream> devices = new HashMap<String, DataOutputStream>();
 
+                HashMap<String, DataOutputStream> devices = new HashMap<String, DataOutputStream>();
                 for (String device : getDevices()) {
+                    //Grant permissions to directly write to device
+                    os.write(("chmod 777 " + device + " \n").getBytes("ASCII"));
+                    os.flush();
                     devices.put(device, new DataOutputStream(new BufferedOutputStream(
                             new FileOutputStream(new File(device)))));
                 }
