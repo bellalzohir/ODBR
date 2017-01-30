@@ -49,11 +49,11 @@ public class ReportActivity extends ActionBarActivity {
 
         //Set the image and title to the application icon and name
         TextView appName = (TextView) findViewById(R.id.appName);
-        appName.setText("Bug Report for " + Globals.appName);
+        appName.setText("Bug Report for " + BugReport.getInstance().getAppName());
 
         try {
             PackageManager pm = getPackageManager();
-            Drawable icon = pm.getApplicationIcon(Globals.packageName);
+            Drawable icon = pm.getApplicationIcon(BugReport.getInstance().getPackageName());
             ImageView iv = (ImageView) findViewById(R.id.appIcon);
             iv.setImageDrawable(icon);
         } catch (PackageManager.NameNotFoundException e) {}
@@ -98,6 +98,7 @@ public class ReportActivity extends ActionBarActivity {
         BugReport.getInstance().setDescription_actual_outcome(actualOutcome.getText().toString());
     }
 
+
     private void fillDescriptions(){
         reporterName.setText(BugReport.getInstance().getName());
         reportTitle.setText(BugReport.getInstance().getTitle());
@@ -124,7 +125,7 @@ public class ReportActivity extends ActionBarActivity {
 
         try {
             Process clear_app_data = Runtime.getRuntime().exec("su", null, null);
-            String cmd = "pm clear " + Globals.packageName;
+            String cmd = "pm clear " + BugReport.getInstance().getPackageName();
             OutputStream os = clear_app_data.getOutputStream();
             os.write((cmd + "\n").getBytes("ASCII"));
             os.flush();
@@ -138,7 +139,7 @@ public class ReportActivity extends ActionBarActivity {
 
         Intent intent = new Intent(this, ReplayService.class);
         startService(intent);
-        Intent reportApp = getPackageManager().getLaunchIntentForPackage(Globals.packageName);
+        Intent reportApp = getPackageManager().getLaunchIntentForPackage(BugReport.getInstance().getPackageName());
         reportApp.addCategory(Intent.CATEGORY_LAUNCHER);
         reportApp.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         reportApp.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);

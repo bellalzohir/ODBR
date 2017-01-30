@@ -45,11 +45,11 @@ public class ReviewActivity extends FragmentActivity {
         setContentView(R.layout.activity_review_report);
         //Sets the title and image
         TextView appName = (TextView) findViewById(R.id.appName);
-        appName.setText("Bug Report for " + Globals.appName);
+        appName.setText("Bug Report for " + BugReport.getInstance().getAppName());
 
         try {
             PackageManager pm = getPackageManager();
-            Drawable icon = pm.getApplicationIcon(Globals.packageName);
+            Drawable icon = pm.getApplicationIcon(BugReport.getInstance().getPackageName());
             ImageView iv = (ImageView) findViewById(R.id.appIcon);
             iv.setImageDrawable(icon);
         } catch (PackageManager.NameNotFoundException e) {Log.e("ReviewActivity", "Package Name Not Found");}

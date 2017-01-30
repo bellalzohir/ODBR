@@ -194,8 +194,9 @@ public class LaunchAppActivity extends Activity {
         PackageManager pm = getPackageManager();
         for (ApplicationInfo app : pm.getInstalledApplications(PackageManager.GET_META_DATA)) {
             if (app.loadLabel(pm).equals(appName)) {
-                Globals.appName = appName;
-                Globals.packageName = app.packageName;
+                BugReport.getInstance().setAppName(appName);
+                BugReport.getInstance().setPackageName(app.packageName);
+                break;
             }
         }
 
@@ -207,7 +208,7 @@ public class LaunchAppActivity extends Activity {
 
         try {
             Process clear_app_data = Runtime.getRuntime().exec("su", null, null);
-            String cmd = "pm clear " + Globals.packageName;
+            String cmd = "pm clear " + BugReport.getInstance().getPackageName();
             OutputStream os = clear_app_data.getOutputStream();
             os.write((cmd + "\n").getBytes("ASCII"));
             os.flush();
@@ -222,7 +223,7 @@ public class LaunchAppActivity extends Activity {
         }
 
         //Launch application to be reported
-        Intent reportApp = getPackageManager().getLaunchIntentForPackage(Globals.packageName);
+        Intent reportApp = getPackageManager().getLaunchIntentForPackage(BugReport.getInstance().getPackageName());
         reportApp.addCategory(Intent.CATEGORY_LAUNCHER);
         reportApp.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         reportApp.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);

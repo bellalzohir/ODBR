@@ -25,7 +25,8 @@ public class BugReport {
     private HashMap<String, SensorDataList> sensorData = new HashMap<String, SensorDataList>();
     private List<ReportEvent> eventList = new ArrayList<ReportEvent>();
     private transient HashMap<Long, Integer> orientations = new HashMap<Long, Integer>();
-    private String app_name = Globals.packageName;
+    private String app_name;
+    private String package_name;
     private String device_type = android.os.Build.MODEL;
     private String description_actual_outcome = "";
     private String description_desired_outcome = "";
@@ -93,6 +94,10 @@ public class BugReport {
         app_name = s;
     }
 
+    public void setPackageName(String s) {
+        package_name = s;
+    }
+
     /**
      * Returns a Bitmap representing the sensor's data over the course of the report. The graph
      * is formatted with a horizontal line representing the mean value and other lines representing
@@ -147,6 +152,12 @@ public class BugReport {
     }
     public String getTitle() {
         return title;
+    }
+    public String getAppName() {
+        return app_name;
+    }
+    public String getPackageName() {
+        return package_name;
     }
     public String getDescription_desired_outcome(){
         return description_desired_outcome;
