@@ -1,4 +1,4 @@
-package csci435.csci435_odbr;
+package semeru.odbr;
 
 import android.graphics.Bitmap;
 import android.util.Base64;
@@ -19,7 +19,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 
 /**
- * Created by Rich on 1/24/17.
+ * Created by Richard Bonett on 1/24/17.
  */
 public class ReportEventSerializer implements JsonSerializer<ReportEvent> {
 

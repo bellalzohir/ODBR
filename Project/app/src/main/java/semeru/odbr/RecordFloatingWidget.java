@@ -1,4 +1,4 @@
-package csci435.csci435_odbr;
+package semeru.odbr;
 
 import android.app.Service;
 import android.content.Context;

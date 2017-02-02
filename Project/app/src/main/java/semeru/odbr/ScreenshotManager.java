@@ -1,24 +1,20 @@
-package csci435.csci435_odbr;
+package semeru.odbr;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.Handler;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.OutputStream;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Created by Rich on 4/23/16.
+ * Created by Richard Bonett on 4/23/16.
  *
  * The ScreenshotManager provides functionality for taking a screenshot. To take a screenshot,
  * simply call takeScreenshot() and receive a Screenshot Object (below)

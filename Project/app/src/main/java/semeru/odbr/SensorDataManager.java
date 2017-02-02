@@ -1,4 +1,4 @@
-package csci435.csci435_odbr;
+package semeru.odbr;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -11,7 +11,7 @@ import android.content.Context;
 import android.hardware.Sensor;
 
 /**
- * Created by Rich on 2/11/16.
+ * Created by Richard Bonett on 2/11/16.
  * Manages the sensors that we are going to be listening for. It allows for the start / stop of the listening process
  * where the listening registers changes to the values. If a change is detected then the value is registered.
  */

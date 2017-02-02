@@ -1,24 +1,17 @@
-package csci435.csci435_odbr;
+package semeru.odbr;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.provider.ContactsContract;
 import android.util.Log;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

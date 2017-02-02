@@ -1,4 +1,4 @@
-package csci435.csci435_odbr;
+package semeru.odbr;
 
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
@@ -18,7 +18,7 @@ public class Globals {
     public static int height;
     public static int availableHeightForImage;
     public static long time_last_event;
-    public static String databaseURL = "http://23.92.18.210:5984/odbr/";
+    public static String databaseURL = "http://23.92.18.210:5984/odbr/"; //CouchDB URL
     public static String baseDirectory = "sdcard" + File.separator + "ODBR";
     public static String hierarchyDumpDirectory = baseDirectory + File.separator + "HierarchyDumps" + File.separator;
     public static String screenshotDirectory = baseDirectory + File.separator + "Screenshots" + File.separator;

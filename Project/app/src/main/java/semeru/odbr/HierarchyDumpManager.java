@@ -1,9 +1,6 @@
-package csci435.csci435_odbr;
+package semeru.odbr;
 
-import android.accessibilityservice.AccessibilityService;
 import android.util.Log;
-import android.view.accessibility.AccessibilityEvent;
-import android.view.accessibility.AccessibilityNodeInfo;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -11,14 +8,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.io.File;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 

@@ -3,6 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="csci435.csci435_odbr.SplashScreen">
+    tools:context="semeru.odbr.SplashScreen">
 
 </RelativeLayout>

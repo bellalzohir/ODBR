@@ -1,4 +1,4 @@
-package csci435.csci435_odbr;
+package semeru.odbr;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
