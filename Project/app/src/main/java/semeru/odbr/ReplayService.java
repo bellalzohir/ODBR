@@ -52,6 +52,14 @@ public class ReplayService extends IntentService {
         private long wait_after = 2000; //Milliseconds to wait after returning to report
         @Override
         public void run() {
+            /*replayUsingSendEvent();
+            if (true) {
+                Intent record_intent = new Intent(ReplayService.this, ReportActivity.class);
+                record_intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                record_intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                startActivity(record_intent);
+                return;
+            } */
             try {
                 Thread.sleep(wait_before);
                 long previousEventTime = BugReport.getInstance().getStartTime();
@@ -61,24 +69,31 @@ public class ReplayService extends IntentService {
 
 
                 HashMap<String, DataOutputStream> devices = new HashMap<String, DataOutputStream>();
+                HashMap<String, DataOutputStream> procs = new HashMap<String, DataOutputStream>();
                 for (String device : getDevices()) {
                     //Grant permissions to directly write to device
-                    Process p = Runtime.getRuntime().exec("sh");
+                    /*Process p = Runtime.getRuntime().exec("sh");
                     p.getOutputStream().write(("whoami \n").getBytes("ASCII"));
                     p.getOutputStream().flush();
+                    p.getOutputStream().close();
                     InputStream s = p.getInputStream();
-                    byte[] buf = new byte[2048];
-                    s.read(buf);
-                    Log.d("ReplayService", String.valueOf(buf));
+                    int ch;
+                    StringBuilder sb = new StringBuilder();
+                    while((ch = p.getInputStream().read()) != -1) {
+                        sb.append((char) ch);
+                    }
+                    String id = sb.toString();
+                    Log.d("ReplayService", "ID: " + id); */
+
                     Process process = Runtime.getRuntime().exec("su");
                     DataOutputStream dataOutputStream = new DataOutputStream(process.getOutputStream());
                     dataOutputStream.writeBytes("chmod 777 " + device + " \n");
-                    dataOutputStream.writeBytes("chown $(whoami) " + device + " \n");
-                    dataOutputStream.writeBytes("exit \n");
+                    //dataOutputStream.writeBytes("chown u0_a58"  + device + " \n");
                     dataOutputStream.flush();
-                    process.waitFor();
-                    devices.put(device, new DataOutputStream(new BufferedOutputStream(
-                            new FileOutputStream(new File(device)))));
+                    //process.waitFor();
+                    //devices.put(device, new DataOutputStream(new BufferedOutputStream(
+                    //        new FileOutputStream(new File(device)))));
+                    procs.put(device, dataOutputStream);
                 }
 
                 DataOutputStream out;
@@ -86,10 +101,11 @@ public class ReplayService extends IntentService {
                     out = devices.get(bundle.device);
                     waitUntil = System.currentTimeMillis() + (bundle.timeMillis - previousEventTime);
                     while ((curTime = System.currentTimeMillis()) < waitUntil) {/* <(^_^)> */}
-                    for (byte[] cmd : bundle.commands) {
-                        out.write(cmd);
+                    for (String cmd : bundle.commandStrings) {
+                        //out.write(cmd);
+                        procs.get(bundle.device).write(("echo -n -e '" + cmd + "' >> " + bundle.device + " \n").getBytes("ASCII"));
                     }
-                    out.flush();
+                    procs.get(bundle.device).flush();
                     previousEventTime = bundle.timeMillis;
                 }
                 for (DataOutputStream outputStream : devices.values()) {
@@ -135,7 +151,7 @@ public class ReplayService extends IntentService {
                 try {
                     os.flush();
                 } catch (Exception e) {
-                    Log.e("ReplayServcie", e.getMessage());
+                    Log.e("ReplayService", e.getMessage());
                 }
                 previousEventTime = bundle.timeMillis;
             }
@@ -205,12 +221,21 @@ public class ReplayService extends IntentService {
         class SendEventBundle {
             public String device;
             public byte[][] commands;
+            public String[] commandStrings;
             public long timeMillis;
 
             public SendEventBundle(String device, byte[][] commands, long timeMillis) {
                 this.device = device;
                 this.commands = commands;
                 this.timeMillis = timeMillis;
+                commandStrings = new String[commands.length];
+                for (int i = 0; i < commands.length; i++) {
+                    StringBuilder cmdString = new StringBuilder();
+                    for (byte b : commands[i]) {
+                        cmdString.append(String.format("\\x%02x", b));
+                    }
+                    commandStrings[i] = cmdString.toString();
+                }
             }
         }
 
