@@ -8,6 +8,7 @@ import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,6 +27,7 @@ public class ReplayService extends IntentService {
 
     Process su_replay;
     OutputStream os;
+    ArrayList<ReplayEvent.SendEventBundle> preProcessedEvents;
 
     public ReplayService() {
         super("ReplayService");
@@ -50,6 +52,14 @@ public class ReplayService extends IntentService {
         private long wait_after = 2000; //Milliseconds to wait after returning to report
         @Override
         public void run() {
+            replayUsingSendEvent();
+            if (true) {
+                Intent record_intent = new Intent(ReplayService.this, ReportActivity.class);
+                record_intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                record_intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                startActivity(record_intent);
+                return;
+            }
             try {
                 Thread.sleep(wait_before);
                 long previousEventTime = BugReport.getInstance().getStartTime();
@@ -61,9 +71,17 @@ public class ReplayService extends IntentService {
                 HashMap<String, DataOutputStream> devices = new HashMap<String, DataOutputStream>();
                 for (String device : getDevices()) {
                     //Grant permissions to directly write to device
+                    Process p = Runtime.getRuntime().exec("sh");
+                    p.getOutputStream().write(("whoami \n").getBytes("ASCII"));
+                    p.getOutputStream().flush();
+                    InputStream s = p.getInputStream();
+                    byte[] buf = new byte[2048];
+                    s.read(buf);
+                    Log.d("ReplayService", String.valueOf(buf));
                     Process process = Runtime.getRuntime().exec("su");
                     DataOutputStream dataOutputStream = new DataOutputStream(process.getOutputStream());
                     dataOutputStream.writeBytes("chmod 777 " + device + " \n");
+                    dataOutputStream.writeBytes("chown $(whoami) " + device + " \n");
                     dataOutputStream.writeBytes("exit \n");
                     dataOutputStream.flush();
                     process.waitFor();
@@ -74,12 +92,12 @@ public class ReplayService extends IntentService {
                 DataOutputStream out;
                 for (SendEventBundle bundle : events) {
                     out = devices.get(bundle.device);
+                    waitUntil = System.currentTimeMillis() + (bundle.timeMillis - previousEventTime);
                     while ((curTime = System.currentTimeMillis()) < waitUntil) {/* <(^_^)> */}
                     for (byte[] cmd : bundle.commands) {
                         out.write(cmd);
                     }
                     out.flush();
-                    waitUntil = curTime + (bundle.timeMillis - previousEventTime);
                     previousEventTime = bundle.timeMillis;
                 }
                 for (DataOutputStream outputStream : devices.values()) {
@@ -91,12 +109,45 @@ public class ReplayService extends IntentService {
             } catch (Exception e) {
                 Log.e("ReplayService", "Unable to replay event: " + e.getMessage());
                 e.printStackTrace();
+                replayUsingSendEvent();
             }
 
             Intent record_intent = new Intent(ReplayService.this, ReportActivity.class);
             record_intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             record_intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
             startActivity(record_intent);
+        }
+
+        public void replayUsingSendEvent() {
+            try {
+                Thread.sleep(wait_before);
+                su_replay = Runtime.getRuntime().exec("su", null, null);
+                os = su_replay.getOutputStream();
+            } catch (Exception e) {
+                Log.e("ReplayService", "Could not start su!");
+            }
+            ArrayList<SendEventBundle> events = preprocessEvents();
+            long waitUntil = 0;
+            long curTime;
+            long previousEventTime = BugReport.getInstance().getStartTime();
+            for (SendEventBundle bundle : events) {
+                waitUntil = System.currentTimeMillis() + (bundle.timeMillis - previousEventTime);
+                while ((curTime = System.currentTimeMillis()) < waitUntil) {/* <(^_^)> */}
+                for (byte[] cmd : bundle.commands) {
+                    try {
+                        os.write((new GetEvent(cmd).getSendEvent(bundle.device) + " \n").getBytes("ASCII"));
+                        os.flush();
+                    } catch (Exception e) {
+                        Log.e("ReplayService", e.getMessage());
+                    }
+                }
+                previousEventTime = bundle.timeMillis;
+            }
+            try {
+                Thread.sleep(wait_after);
+            } catch(Exception e) {
+                Log.e("ReplayService", e.getMessage());
+            }
         }
 
 
@@ -110,6 +161,9 @@ public class ReplayService extends IntentService {
 
 
         public ArrayList<SendEventBundle> preprocessEvents() {
+            if (preProcessedEvents != null) {
+                return preProcessedEvents;
+            }
             ArrayList<SendEventBundle> events =  new ArrayList<SendEventBundle>();
             ArrayList<GetEvent> buffer = new ArrayList<GetEvent>();
             String device = "";
@@ -132,6 +186,7 @@ public class ReplayService extends IntentService {
                 events.add(makeBundle(buffer, device));
                 buffer.clear();
             }
+            preProcessedEvents = events;
             return events;
         }
 
