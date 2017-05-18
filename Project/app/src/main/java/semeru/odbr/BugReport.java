@@ -125,7 +125,7 @@ public class BugReport {
 
         long timeMod = data.getElapsedTime(data.numItems() - 1) / Globals.width;
         timeMod = timeMod > 0 ? timeMod : 1;
-        for (int k = 0; k < data.numItems() && k < colors.length; k++) {
+        for (int k = 0; k < data.numTraces() && k < colors.length; k++) {
             float valueMod = data.meanValue(k) / (height / 2);
             valueMod = valueMod > 0 ? valueMod : 1;
             color.setColor(colors[k]);
@@ -186,19 +186,16 @@ public class BugReport {
 class SensorDataList {
     private ArrayList<SensorDataContainer> values;
     private String[] valueDescriptions;
-    private transient float[] valueSums;
-    private transient int numItems;
+    private transient float[] valueSums = null;
 
     public SensorDataList(int sensorType) {
         values = new ArrayList<SensorDataContainer>();
-        numItems = 0;
-        valueDescriptions = Globals.sensorDescription.get(sensorType, new String[] {""});
+        valueDescriptions = Globals.sensorDescription.get(sensorType, new String[] {"", "", "", ""});
     }
 
     public void addData(long timestamp, float[] value) {
-        ++numItems;
         values.add(new SensorDataContainer(timestamp, value));
-        if (numItems == 1) {
+        if (valueSums == null) {
             valueSums = new float[value.length];
         }
         for (int i = 0; i < value.length; i++) {
@@ -207,25 +204,40 @@ class SensorDataList {
     }
 
     public long getTime(int index) {
+        if (index >= values.size() || index < 0) {
+            return 0;
+        }
         return values.get(index).time;
     }
 
     public long getElapsedTime(int index) {
+        if (index >= values.size() || index < 0) {
+            return 0;
+        }
         return values.get(index).time - values.get(0).time;
     }
 
     public float meanValue(int index) {
-        return valueSums[index] / numItems;
+        if (index >= valueSums.length || index < 0) {
+            return 0;
+        }
+        return valueSums[index] / values.size();
     }
 
     public float[] getValues(int index) {
+        if (index >= values.size() || index < 0) {
+            return null;
+        }
         return values.get(index).values;
     }
 
     public int numItems() {
-        return numItems;
+        return values.size();
     }
 
+    public int numTraces() {
+        return valueSums.length;
+    }
 
     class SensorDataContainer {
         public long time;
