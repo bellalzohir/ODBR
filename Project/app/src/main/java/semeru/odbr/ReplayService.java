@@ -52,14 +52,6 @@ public class ReplayService extends IntentService {
         private long wait_after = 2000; //Milliseconds to wait after returning to report
         @Override
         public void run() {
-            replayUsingSendEvent();
-            if (true) {
-                Intent record_intent = new Intent(ReplayService.this, ReportActivity.class);
-                record_intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                record_intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-                startActivity(record_intent);
-                return;
-            }
             try {
                 Thread.sleep(wait_before);
                 long previousEventTime = BugReport.getInstance().getStartTime();
@@ -136,14 +128,20 @@ public class ReplayService extends IntentService {
                 for (byte[] cmd : bundle.commands) {
                     try {
                         os.write((new GetEvent(cmd).getSendEvent(bundle.device) + " \n").getBytes("ASCII"));
-                        os.flush();
                     } catch (Exception e) {
                         Log.e("ReplayService", e.getMessage());
                     }
                 }
+                try {
+                    os.flush();
+                } catch (Exception e) {
+                    Log.e("ReplayServcie", e.getMessage());
+                }
                 previousEventTime = bundle.timeMillis;
             }
             try {
+                os.close();
+                su_replay.waitFor();
                 Thread.sleep(wait_after);
             } catch(Exception e) {
                 Log.e("ReplayService", e.getMessage());
