@@ -46,7 +46,7 @@ public class ReplayService extends IntentService {
 
 
     class ReplayEvent implements Runnable {
-        private long wait_before = 1000; //Milliseconds to wait before starting inputs
+        private long wait_before = 2000; //Milliseconds to wait before starting inputs
         private long wait_after = 2000; //Milliseconds to wait after returning to report
         @Override
         public void run() {
@@ -61,8 +61,12 @@ public class ReplayService extends IntentService {
                 HashMap<String, DataOutputStream> devices = new HashMap<String, DataOutputStream>();
                 for (String device : getDevices()) {
                     //Grant permissions to directly write to device
-                    os.write(("chmod 777 " + device + " \n").getBytes("ASCII"));
-                    os.flush();
+                    Process process = Runtime.getRuntime().exec("su");
+                    DataOutputStream dataOutputStream = new DataOutputStream(process.getOutputStream());
+                    dataOutputStream.writeBytes("chmod 777 " + device + " \n");
+                    dataOutputStream.writeBytes("exit \n");
+                    dataOutputStream.flush();
+                    process.waitFor();
                     devices.put(device, new DataOutputStream(new BufferedOutputStream(
                             new FileOutputStream(new File(device)))));
                 }
@@ -86,6 +90,7 @@ public class ReplayService extends IntentService {
                 Thread.sleep(wait_after);
             } catch (Exception e) {
                 Log.e("ReplayService", "Unable to replay event: " + e.getMessage());
+                e.printStackTrace();
             }
 
             Intent record_intent = new Intent(ReplayService.this, ReportActivity.class);
