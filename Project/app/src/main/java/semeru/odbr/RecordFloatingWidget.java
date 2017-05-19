@@ -86,7 +86,7 @@ public class RecordFloatingWidget extends Service {
     @Override
     public void onConfigurationChanged(Configuration conf) {
         Log.d("RFW", "Orientation: " + BugReport.getInstance().getCurrentOrientation() + " | " + display.getRotation());
-        if (recording && BugReport.getInstance().getCurrentOrientation() != display.getRotation()) {
+        if (recording) {
             BugReport.getInstance().addOrientationChange(System.currentTimeMillis(), display.getRotation());
             Globals.event_active = true;
         }
@@ -135,6 +135,7 @@ public class RecordFloatingWidget extends Service {
      */
     public void recordEvents(View view){
         recording = true;
+        Globals.event_active = true;
         gem.startRecording();
         sdm.startRecording();
         hideOverlay();

@@ -115,7 +115,7 @@ public class ReplayService extends IntentService {
             long waitUntil = 0;
             long previousEventTime = BugReport.getInstance().getStartTime();
             for (SendEventBundle bundle : events) {
-                waitUntil = System.currentTimeMillis() + (bundle.timeMillis - previousEventTime);
+                waitUntil = System.currentTimeMillis() + min(bundle.timeMillis - previousEventTime, 2000);
                 while (System.currentTimeMillis() < waitUntil) {/* <(^_^)> */}
                 for (byte[] cmd : bundle.commands) {
                     try {
@@ -146,6 +146,10 @@ public class ReplayService extends IntentService {
          */
         public void freezeOrientation() {
             Settings.System.putInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 0);
+        }
+
+        private long min(long a, long b) {
+            return a < b ? a : b;
         }
 
         /**

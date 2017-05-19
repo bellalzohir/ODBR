@@ -95,7 +95,7 @@ public class BugReport {
             this.orientation = orientation;
             return;
         }
-        if (orientationStrings[this.orientation].equals(orString)) {
+        if (this.orientation == orientation) {
             return;
         }
         orientations.put(time, orientation);
