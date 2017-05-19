@@ -173,7 +173,6 @@ public class RecordFloatingWidget extends Service {
                 Globals.event_active = false;
                 handler.postDelayed(widget_timer, 3000);
             }
-
         }
     };
 
