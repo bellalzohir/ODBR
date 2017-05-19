@@ -76,7 +76,7 @@ class OrientationLogger extends OrientationEventListener {
 
     @Override
     public void onOrientationChanged(int orientation) {
-        Log.d("Orientation", "Changed to: " + orientation);
         BugReport.getInstance().addOrientationChange(System.currentTimeMillis(), orientation);
+        Globals.event_active = true;
     }
 }

@@ -20,6 +20,10 @@ import java.util.ArrayList;
 public class ReportEvent {
     short EV_ABS = 3;
 
+    public static transient int TYPE_USER_EVENT = 0;
+    public static transient int TYPE_ORIENTATION = 1;
+    public transient int type = TYPE_USER_EVENT;
+
     private Screenshot screenshot;
     private HierarchyDump hierarchy;
     private ArrayList<GetEvent> inputList;
@@ -28,6 +32,7 @@ public class ReportEvent {
     private long event_start_time = 0;
     private long event_end_time = 0;
     private String device;
+    private int orientation;
 
     public ReportEvent(String device) {
         this.device = device;
@@ -103,6 +108,10 @@ public class ReportEvent {
         return device;
     }
 
+    public int getOrientation() {
+        return orientation;
+    }
+
     public void setStartTime(Long time) {
         event_start_time = time;
     }
@@ -113,6 +122,10 @@ public class ReportEvent {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public void setOrientation(int orientation) {
+        this.orientation = orientation;
     }
 
     /**

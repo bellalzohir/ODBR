@@ -21,13 +21,13 @@ import android.util.Log;
  */
 public class BugReport {
     public static transient int colors[] = {Color.BLUE, Color.GREEN, Color.RED, Color.CYAN, Color.YELLOW, Color.MAGENTA};
-    private static transient String[] orientationStrings = {"portrait", "landscape_left", "reverse", "landscape_right"};
+    public static transient String[] orientationStrings = {"portrait", "landscape_left", "reverse", "landscape_right"};
     private transient HashMap<String, Bitmap> sensorGraphs = new HashMap<String, Bitmap>();
 
     private HashMap<String, SensorDataList> sensorData = new HashMap<String, SensorDataList>();
     private List<ReportEvent> eventList = new ArrayList<ReportEvent>();
     private LinkedHashMap<Long, Integer> orientations = new LinkedHashMap<Long, Integer>();
-    private transient String orientation; // current device orientation
+    private transient int orientation = -1; // current device orientation
     private String app_name;
     private String package_name;
     private String device_type = android.os.Build.MODEL;
@@ -85,28 +85,34 @@ public class BugReport {
             Log.e("BugReport", "Could not match orientation '" + orientation + "': " + e.getMessage());
             return;
         }
-        if (this.orientation == null) {
-            this.orientation = orString;
+        if (this.orientation == -1) {
+            this.orientation = orientation;
             return;
         }
-        if (this.orientation.equals(orString)) {
+        if (orientationStrings[this.orientation / 90].equals(orString)) {
             return;
         }
         orientations.put(time, orientation);
         ReportEvent orientationChange = new ReportEvent(null);
+        orientationChange.type = ReportEvent.TYPE_ORIENTATION;
+        orientationChange.setOrientation(orientation);
         orientationChange.setStartTime(time);
-        orientationChange.setEndTime(time);
+        orientationChange.setEndTime(time + 100);
 
-        String descriptor = this.orientation + "_to_" + orString;
+        String descriptor = orientationStrings[this.orientation / 90] + "_to_" + orString;
         orientationChange.setScreenshot(new Screenshot("@drawable/" + descriptor));
-        orientationChange.setDescription("Rotate device from " + this.orientation + " to " + orString);
+        orientationChange.setDescription("Rotate device from " + orientationStrings[this.orientation / 90] + " to " + orString);
         addEvent(orientationChange);
 
-        this.orientation = orString;
+        this.orientation = orientation;
+    }
+
+    public int getCurrentOrientation() {
+        return orientation;
     }
 
     public void setCurrentOrientation(int orientation) {
-        this.orientation = orientationStrings[orientation / 90];
+        this.orientation = orientation;
     }
 
     public void setOrientations(LinkedHashMap<Long, Integer> orientations) {

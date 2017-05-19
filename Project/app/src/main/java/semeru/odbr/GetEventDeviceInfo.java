@@ -245,7 +245,6 @@ public class GetEventDeviceInfo {
                     device_info_hashmap.put("BTN_TOUCH", key_info_hashmap.get("BTN_TOUCH"));
                 }
 
-                su.destroy();
                 set_device_type();
                 for (String s : devices) {
                     Log.v("GetEventDeviceInfo", s);

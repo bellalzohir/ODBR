@@ -119,12 +119,7 @@ public class GetEventManager {
                 //runnable that creates new report events based on the output of the cat process
                 event = new ReportEvent(device);
                 while (is.read(res) > 0) {
-                    //increments the time so the live data feed acts as an update, not just the start of the event
-                    //otherwise events of longer than 3 seconds would pose a problem
-                    Globals.time_last_event = System.currentTimeMillis();
-
-                    //a getevent consists of the entire, reformatted, that the cat process grabs, all of these are
-                    //associated with a specific ReportEvent based on the parameters below.
+                    Globals.event_active = true;
                     GetEvent getevent = new GetEvent(res);
                     event.addGetEvent(getevent);
 
@@ -147,6 +142,7 @@ public class GetEventManager {
                                 getevent = new GetEvent(res);
                                 event.addGetEvent(getevent);
                             } while (getevent.getCode() != SYN_REPORT);
+                            event.setOrientation(BugReport.getInstance().getCurrentOrientation());
                             BugReport.getInstance().addEvent(event);
                             event = new ReportEvent(device);
                         }
@@ -253,7 +249,8 @@ class GetEvent {
     }
 
     public long getTimeMillis() {
-        long time = (getSeconds() & 0x000FFFFF) * 1000;
+        long time = getSeconds()  * 1000;
+        time = time < 0 ? time * -1 : time;
         time += getMicroseconds() / 1000;
         return time;
     }

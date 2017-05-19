@@ -105,7 +105,6 @@ public class RecordFloatingWidget extends Service {
     public void recordEvents(View view){
         gem.startRecording();
         sdm.startRecording();
-        Globals.time_last_event = System.currentTimeMillis();
         hideOverlay();
         handler.post(widget_timer);
     }
@@ -131,13 +130,14 @@ public class RecordFloatingWidget extends Service {
         public void run() {
 
             //check to see if we have reached the condition.
-            if(System.currentTimeMillis() - Globals.time_last_event > 3000){
+            if(Globals.event_active == false){
                 //we dont want to loop anymore
                 restoreOverlay();
             }
             else{
-                //check again 1 second later
-                handler.postDelayed(widget_timer, 1000);
+                //check again 2 seconds later
+                Globals.event_active = false;
+                handler.postDelayed(widget_timer, 2000);
             }
 
         }

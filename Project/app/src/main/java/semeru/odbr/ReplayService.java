@@ -2,6 +2,7 @@ package semeru.odbr;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.provider.Settings;
 import android.util.Log;
 
 import java.io.BufferedOutputStream;
@@ -52,6 +53,7 @@ public class ReplayService extends IntentService {
         private long wait_after = 2000; //Milliseconds to wait after executing inputs
         @Override
         public void run() {
+            freezeOrientation();
             try {
                 HashMap<String, DataOutputStream> procs = new HashMap<String, DataOutputStream>();
                 for (String device : getDevices()) {
@@ -72,10 +74,15 @@ public class ReplayService extends IntentService {
                 for (SendEventBundle bundle : events) {
                     waitUntil = System.currentTimeMillis() + (bundle.timeMillis - previousEventTime);
                     while (System.currentTimeMillis() < waitUntil) {/* <(^_^)> */}
-                    for (String cmd : bundle.commandStrings) {
-                        procs.get(bundle.device).writeBytes("echo -n '" + cmd + "' >&3 \n");
+                    if ("ORIENTATION".equals(bundle.device)) {
+                        changeOrientation(bundle.orientation);
                     }
-                    procs.get(bundle.device).flush();
+                    else {
+                        for (String cmd : bundle.commandStrings) {
+                            procs.get(bundle.device).writeBytes("echo -n '" + cmd + "' >&3 \n");
+                        }
+                        procs.get(bundle.device).flush();
+                    }
                     previousEventTime = bundle.timeMillis;
                 }
                 os.close();
@@ -86,6 +93,7 @@ public class ReplayService extends IntentService {
                 e.printStackTrace();
                 replayUsingSendEvent();
             }
+            releaseOrientation();
 
             Intent record_intent = new Intent(ReplayService.this, ReportActivity.class);
             record_intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -131,6 +139,32 @@ public class ReplayService extends IntentService {
         }
 
 
+        /**
+         * Prevent accelerometer from affecting device orientation
+         */
+        public void freezeOrientation() {
+            Settings.System.putInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 0);
+        }
+
+        /**
+         * Allow accelerometer to change orientation
+         */
+        public void releaseOrientation() {
+            Settings.System.putInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 1);
+        }
+
+        /**
+         * Change device orientation to match given orientation
+         * @param orientation
+         */
+        public void changeOrientation(int orientation) {
+            if (orientation == 90 || orientation == 270) {
+                // swap 90 and 270
+                orientation = (orientation + 180) % 360;
+            }
+            Settings.System.putInt(getContentResolver(), Settings.System.USER_ROTATION, orientation / 90);
+        }
+
         public String[] getDevices() {
             Set<String> devices = new HashSet<String>();
             for (ReportEvent event : BugReport.getInstance().getEventList()) {
@@ -149,22 +183,29 @@ public class ReplayService extends IntentService {
             String device = "";
             long time = 0;
             for (ReportEvent event : BugReport.getInstance().getEventList()) {
-                device = event.getDevice();
-                for (GetEvent e : event.getInputEvents()) {
-                    if (buffer.isEmpty() || time == e.getTimeMillis()) {
-                        buffer.add(e);
-                    }
-                    else {
-                        events.add(makeBundle(buffer, device));
-                        buffer.clear();
-                        buffer.add(e);
-                    }
-                    time = e.getTimeMillis();
+                if (event.type == ReportEvent.TYPE_ORIENTATION) {
+                    SendEventBundle bundle = new SendEventBundle("ORIENTATION", null, event.getStartTime());
+                    bundle.orientation = event.getOrientation();
+                    events.add(bundle);
                 }
-            }
-            if (!buffer.isEmpty()) {
-                events.add(makeBundle(buffer, device));
-                buffer.clear();
+                else {
+                    device = event.getDevice();
+                    for (GetEvent e : event.getInputEvents()) {
+                        if (buffer.isEmpty() || time == e.getTimeMillis()) {
+                            buffer.add(e);
+                        }
+                        else {
+                            events.add(makeBundle(buffer, device));
+                            buffer.clear();
+                            buffer.add(e);
+                        }
+                        time = e.getTimeMillis();
+                    }
+                }
+                if (!buffer.isEmpty()) {
+                    events.add(makeBundle(buffer, device));
+                    buffer.clear();
+                }
             }
             preProcessedEvents = events;
             return events;
@@ -189,18 +230,21 @@ public class ReplayService extends IntentService {
             public byte[][] commands;
             public String[] commandStrings;
             public long timeMillis;
+            public int orientation;
 
             public SendEventBundle(String device, byte[][] commands, long timeMillis) {
                 this.device = device;
                 this.commands = commands;
                 this.timeMillis = timeMillis;
-                commandStrings = new String[commands.length];
-                for (int i = 0; i < commands.length; i++) {
-                    StringBuilder cmdString = new StringBuilder();
-                    for (byte b : commands[i]) {
-                        cmdString.append(String.format("\\x%02x", b));
+                if (commands != null) {
+                    commandStrings = new String[commands.length];
+                    for (int i = 0; i < commands.length; i++) {
+                        StringBuilder cmdString = new StringBuilder();
+                        for (byte b : commands[i]) {
+                            cmdString.append(String.format("\\x%02x", b));
+                        }
+                        commandStrings[i] = cmdString.toString();
                     }
-                    commandStrings[i] = cmdString.toString();
                 }
             }
         }

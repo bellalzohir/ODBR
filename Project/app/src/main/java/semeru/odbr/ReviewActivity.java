@@ -141,10 +141,8 @@ public class ReviewActivity extends FragmentActivity {
             ReportEvent e = BugReport.getInstance().getEventAtIndex(pos);
             eventDescription.setText("(" + (pos + 1) + "/" + max + ") " + e.getEventDescription());
 
-            screenBitmap = e.getScreenshot().getBitmap();
-
-            if (screenBitmap == null) {
-                // Probably an orientation change, check
+            if (e.type == ReportEvent.TYPE_ORIENTATION) {
+                Log.d("ReviewActivity", "File: " + e.getScreenshot().getFilename());
                 int imageResource = getResources().getIdentifier(e.getScreenshot().getFilename(), null, getActivity().getPackageName());
                 if (imageResource == 0) {
                     Log.e("ReviewActivity", "Could not find image for event!");
@@ -160,7 +158,7 @@ public class ReviewActivity extends FragmentActivity {
              * versions of our getEvent data onto it
              */
             else {
-
+                screenBitmap = e.getScreenshot().getBitmap();
                 Canvas c = new Canvas(screenBitmap);
                 Paint color = new Paint();
                 color.setStyle(Paint.Style.STROKE);

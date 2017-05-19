@@ -17,7 +17,7 @@ public class Globals {
     public static int width;
     public static int height;
     public static int availableHeightForImage;
-    public static long time_last_event;
+    public static boolean event_active = true;
     public static String databaseURL = "http://23.92.18.210:5984/odbr/"; //CouchDB URL
     public static String baseDirectory = "sdcard" + File.separator + "ODBR";
     public static String hierarchyDumpDirectory = baseDirectory + File.separator + "HierarchyDumps" + File.separator;
