@@ -36,7 +36,9 @@ public class BugReport {
     private String name = "";
     private String title = "";
     private int os_version = android.os.Build.VERSION.SDK_INT;
-
+    private Screenshot startScreenshot;
+    private Screenshot lastScreenshot;
+    private Screenshot endScreenshot;
 
     private static transient BugReport ourInstance = new BugReport();
 
@@ -67,6 +69,9 @@ public class BugReport {
 
     public void addEvent(ReportEvent e) {
         eventList.add(e);
+        if (e.type != ReportEvent.TYPE_ORIENTATION) {
+            lastScreenshot = e.getScreenshot();
+        }
     }
 
     //adds a sensor 'event' to a specific sensor
@@ -141,6 +146,20 @@ public class BugReport {
 
     public void setPackageName(String s) {
         package_name = s;
+    }
+
+    public void setStartScreenshot(Screenshot s) {
+        startScreenshot = s;
+        lastScreenshot = s;
+    }
+
+    public void setLastScreenshot(Screenshot s) {
+        lastScreenshot = s;
+    }
+
+    public void setEndScreenshot(Screenshot s) {
+        endScreenshot = s;
+        lastScreenshot = s;
     }
 
     /**
@@ -227,6 +246,15 @@ public class BugReport {
     }
     public HashMap<Long, Integer> getOrientations() {
         return orientations;
+    }
+    public Screenshot getStartScreenshot() {
+        return startScreenshot;
+    }
+    public Screenshot getLastScreenshot() {
+        return lastScreenshot;
+    }
+    public Screenshot getEndScreenshot() {
+        return endScreenshot;
     }
 }
 

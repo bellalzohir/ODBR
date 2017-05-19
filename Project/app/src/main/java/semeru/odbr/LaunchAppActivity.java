@@ -200,10 +200,6 @@ public class LaunchAppActivity extends Activity {
             }
         }
 
-        //launch data collection task and floating window
-        Globals.recording = true;
-        startService(new Intent(this, RecordFloatingWidget.class));
-
         //start SU process to clear the saved data within the application
 
         try {
@@ -221,6 +217,17 @@ public class LaunchAppActivity extends Activity {
         } catch (Exception e){
             Log.e("LaunchAppActivity", "Error clearing stored app data");
         }
+
+        // Hide keyboard
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+
+        //launch data collection task and floating window
+        Globals.recording = true;
+        startService(new Intent(this, RecordFloatingWidget.class));
 
         //Launch application to be reported
         Intent reportApp = getPackageManager().getLaunchIntentForPackage(BugReport.getInstance().getPackageName());

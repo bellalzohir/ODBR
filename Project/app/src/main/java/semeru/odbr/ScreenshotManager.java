@@ -66,10 +66,7 @@ public class ScreenshotManager {
      * Otherwise, starts to process a new Screenshot, returning a reference to this new one.
      * @return Most recently processed Screenshot object
      */
-    public Screenshot takeScreenshot() throws Exception {
-        if (service == null) {
-            throw new Exception("ScreenshotDumpManager not initialized");
-        }
+    public Screenshot takeScreenshot() {
         if (taskQueue.isEmpty()) {
             screenshot_index += 1;
             filename = "screenshot" + screenshot_index + ".png";

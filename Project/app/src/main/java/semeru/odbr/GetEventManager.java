@@ -21,8 +21,8 @@ public class GetEventManager {
     private boolean recording;
     private ExecutorService service;
     private ArrayList<Process> processes;
-    private ScreenshotManager sm;
-    private HierarchyDumpManager hdm;
+    public ScreenshotManager sm;
+    public HierarchyDumpManager hdm;
     private
 
     int EV_SYN = 0;
@@ -39,6 +39,15 @@ public class GetEventManager {
         processes = new ArrayList<Process>();
         sm = new ScreenshotManager(Globals.screenshotDirectory);
         hdm = new HierarchyDumpManager(Globals.hierarchyDumpDirectory);
+        sm.initialize();
+        hdm.initialize();
+        if (BugReport.getInstance().getStartScreenshot() == null) {
+            try {
+                BugReport.getInstance().setStartScreenshot(sm.takeScreenshot());
+            } catch (Exception e) {
+                Log.e("GetEventManager", "Could not take screenshot!");
+            }
+        }
     }
 
     /**
@@ -48,8 +57,6 @@ public class GetEventManager {
         if (recording) {
             return;
         }
-        sm.initialize();
-        hdm.initialize();
         try {
             for (String device : getInputDevices()) {
                 service.submit(new GetEventTask(device));
@@ -60,12 +67,10 @@ public class GetEventManager {
         }
     }
 
-    /**
-     * Iterates through the recording processes and stops them, also destroys the hierarchy and screenshot managers
-     */
-    public void stopRecording() {
+    public void pauseRecording() {
         try {
             recording = false;
+            BugReport.getInstance().setEndScreenshot(sm.takeScreenshot());
             for (Process p : processes) {
                 p.getInputStream().close();
                 p.destroy();
@@ -73,6 +78,13 @@ public class GetEventManager {
         } catch (Exception e) {
             Log.v("GetEventManager", "Error stopping GetEvent process: " + e.getMessage());
         }
+    }
+
+    /**
+     * Iterates through the recording processes and stops them, also destroys the hierarchy and screenshot managers
+     */
+    public void stopRecording() {
+        pauseRecording();
         sm.destroy();
         hdm.destroy();
     }

@@ -143,7 +143,6 @@ public class GetEventDeviceInfo {
                         parseNameAbs(parts);
                     }
                 }
-                su.destroy();
 
                 //start the process again without the -l option to begin matching
                 su = Runtime.getRuntime().exec("su", null, null);

@@ -3,9 +3,16 @@ package semeru.odbr;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.IBinder;
+import android.renderscript.Allocation;
+import android.renderscript.Element;
+import android.renderscript.RenderScript;
+import android.renderscript.ScriptIntrinsicBlur;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -45,22 +52,31 @@ public class RecordFloatingWidget extends Service {
     public void onCreate() {
         super.onCreate();
 
+        // Short wait for app to startup
+        try {
+            Thread.sleep(1000);
+        } catch (Exception e) {}
+
+        // Prepare Report, start Data collection
+        BugReport.getInstance().clearReport();
+        gem = new GetEventManager();
+        sdm = new SensorDataManager(this);
+        Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        BugReport.getInstance().setCurrentOrientation(display.getRotation());
+
+        // Short wait for gem / sdm startup
+        try {
+            Thread.sleep(500);
+        } catch (Exception e) {}
+
         //Initialize Overlay
         wm = (WindowManager) getSystemService(WINDOW_SERVICE);
         ll = new LinearLayout(this);
         ll.setGravity(Gravity.CENTER);
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         inflater.inflate(R.layout.floating_widget_layout, ll);
-        ll.setBackgroundColor(0x8833B5E5);
+        ll.setBackgroundColor(0xA0000000);
         wm.addView(ll, parameters);
-
-        // Prepare Report, start Data collection
-        BugReport.getInstance().clearReport();
-        gem = new GetEventManager();
-        sdm = new SensorDataManager(this);
-
-        Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        BugReport.getInstance().setCurrentOrientation(display.getRotation());
     }
 
     /**
@@ -74,9 +90,10 @@ public class RecordFloatingWidget extends Service {
      * Restores the overlay and stops the managers
      */
     public void restoreOverlay() {
-        wm.addView(ll, parameters);
         stopRecording();
+        wm.addView(ll, parameters);
     }
+
 
     /**
      * Launches Record Activity and destroys itself, as the service is not associated with a specific activity
@@ -94,6 +111,7 @@ public class RecordFloatingWidget extends Service {
 
     @Override
     public void onDestroy() {
+        gem.stopRecording();
         super.onDestroy();
         stopSelf();
     }
@@ -117,7 +135,7 @@ public class RecordFloatingWidget extends Service {
             @Override
             public void run() {
                 sdm.stopRecording();
-                gem.stopRecording();
+                gem.pauseRecording();
             }
         });
     }
@@ -135,9 +153,9 @@ public class RecordFloatingWidget extends Service {
                 restoreOverlay();
             }
             else{
-                //check again 2 seconds later
+                //check again 3 seconds later
                 Globals.event_active = false;
-                handler.postDelayed(widget_timer, 2000);
+                handler.postDelayed(widget_timer, 3000);
             }
 
         }
