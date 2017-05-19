@@ -27,6 +27,7 @@ public class BugReport {
     private HashMap<String, SensorDataList> sensorData = new HashMap<String, SensorDataList>();
     private List<ReportEvent> eventList = new ArrayList<ReportEvent>();
     private LinkedHashMap<Long, Integer> orientations = new LinkedHashMap<Long, Integer>();
+    private int startOrientation;
     private transient int orientation = -1; // current device orientation
     private String app_name;
     private String package_name;
@@ -162,6 +163,11 @@ public class BugReport {
         lastScreenshot = s;
     }
 
+    public void setStartOrientation(int orientation) {
+        startOrientation = orientation;
+        this.orientation = orientation;
+    }
+
     /**
      * Returns a Bitmap representing the sensor's data over the course of the report. The graph
      * is formatted with a horizontal line representing the mean value and other lines representing
@@ -255,6 +261,9 @@ public class BugReport {
     }
     public Screenshot getEndScreenshot() {
         return endScreenshot;
+    }
+    public int getStartOrientation() {
+        return startOrientation;
     }
 }
 

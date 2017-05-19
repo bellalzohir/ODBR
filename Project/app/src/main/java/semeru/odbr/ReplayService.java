@@ -54,6 +54,7 @@ public class ReplayService extends IntentService {
         @Override
         public void run() {
             freezeOrientation();
+            changeOrientation(BugReport.getInstance().getStartOrientation());
             try {
                 HashMap<String, DataOutputStream> procs = new HashMap<String, DataOutputStream>();
                 for (String device : getDevices()) {

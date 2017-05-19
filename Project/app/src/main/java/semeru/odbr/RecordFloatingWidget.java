@@ -62,7 +62,7 @@ public class RecordFloatingWidget extends Service {
         gem = new GetEventManager();
         sdm = new SensorDataManager(this);
         Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        BugReport.getInstance().setCurrentOrientation(display.getRotation());
+        BugReport.getInstance().setStartOrientation(display.getRotation());
 
         // Short wait for gem / sdm startup
         try {
