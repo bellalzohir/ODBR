@@ -1,5 +1,6 @@
 package semeru.odbr;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,6 +11,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Color;
+import android.util.Log;
 
 /**
  * Created by Richard Bonett on 2/11/16.
@@ -19,12 +21,13 @@ import android.graphics.Color;
  */
 public class BugReport {
     public static transient int colors[] = {Color.BLUE, Color.GREEN, Color.RED, Color.CYAN, Color.YELLOW, Color.MAGENTA};
-
+    private static transient String[] orientationStrings = {"portrait", "landscape_left", "reverse", "landscape_right"};
     private transient HashMap<String, Bitmap> sensorGraphs = new HashMap<String, Bitmap>();
 
     private HashMap<String, SensorDataList> sensorData = new HashMap<String, SensorDataList>();
     private List<ReportEvent> eventList = new ArrayList<ReportEvent>();
-    private transient HashMap<Long, Integer> orientations = new HashMap<Long, Integer>();
+    private LinkedHashMap<Long, Integer> orientations = new LinkedHashMap<Long, Integer>();
+    private transient String orientation; // current device orientation
     private String app_name;
     private String package_name;
     private String device_type = android.os.Build.MODEL;
@@ -58,6 +61,10 @@ public class BugReport {
     }
 
 
+    public void addEvent(int ndx, ReportEvent e) {
+        eventList.add(ndx, e);
+    }
+
     public void addEvent(ReportEvent e) {
         eventList.add(e);
     }
@@ -70,8 +77,40 @@ public class BugReport {
         sensorData.get(s.getName()).addData(e.timestamp, e.values.clone());
     }
 
-    public void addOrientation(long time, int orientation) {
+    public void addOrientationChange(long time, int orientation) {
+        String orString;
+        try {
+            orString = orientationStrings[orientation / 90];
+        } catch (Exception e) {
+            Log.e("BugReport", "Could not match orientation '" + orientation + "': " + e.getMessage());
+            return;
+        }
+        if (this.orientation == null) {
+            this.orientation = orString;
+            return;
+        }
+        if (this.orientation.equals(orString)) {
+            return;
+        }
         orientations.put(time, orientation);
+        ReportEvent orientationChange = new ReportEvent(null);
+        orientationChange.setStartTime(time);
+        orientationChange.setEndTime(time);
+
+        String descriptor = this.orientation + "_to_" + orString;
+        orientationChange.setScreenshot(new Screenshot("@drawable/" + descriptor));
+        orientationChange.setDescription("Rotate device from " + this.orientation + " to " + orString);
+        addEvent(orientationChange);
+
+        this.orientation = orString;
+    }
+
+    public void setCurrentOrientation(int orientation) {
+        this.orientation = orientationStrings[orientation / 90];
+    }
+
+    public void setOrientations(LinkedHashMap<Long, Integer> orientations) {
+        this.orientations = orientations;
     }
 
     public void setDescription_desired_outcome(String s) {
@@ -145,6 +184,9 @@ public class BugReport {
 
     /* Getters */
     public long getStartTime() {
+        if (eventList == null || eventList.isEmpty()) {
+            return 0;
+        }
         return eventList.get(0).getStartTime();
     }
     public String getName() {
@@ -176,6 +218,9 @@ public class BugReport {
     }
     public HashMap<String, SensorDataList> getSensorData() {
         return sensorData;
+    }
+    public HashMap<Long, Integer> getOrientations() {
+        return orientations;
     }
 }
 

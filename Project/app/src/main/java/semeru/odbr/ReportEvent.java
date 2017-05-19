@@ -34,11 +34,11 @@ public class ReportEvent {
         inputList = new ArrayList<GetEvent>();
     }
 
-    public void addScreenshot(Screenshot s) {
+    public void setScreenshot(Screenshot s) {
         screenshot = s;
     }
 
-    public void addHierarchyDump(HierarchyDump d) {
+    public void setHierarchyDump(HierarchyDump d) {
         hierarchy = d;
     }
 
@@ -51,7 +51,9 @@ public class ReportEvent {
     }
 
     public String getData() {
-        return "Time: " + getStartTime() + " | Screenshot: " + screenshot.getFilename() + " | Dump: " + hierarchy.getFilename();
+        String screenshotFile = screenshot == null ? "none" : screenshot.getFilename();
+        String hierarchyFile = hierarchy == null ? "none" : hierarchy.getFilename();
+        return "Time: " + getStartTime() + " | Screenshot: " + screenshotFile + " | Dump: " + hierarchyFile;
     }
 
     public String getEventDescription() {
@@ -99,6 +101,18 @@ public class ReportEvent {
 
     public String getDevice() {
         return device;
+    }
+
+    public void setStartTime(Long time) {
+        event_start_time = time;
+    }
+
+    public void setEndTime(Long time) {
+        event_end_time = time;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     /**

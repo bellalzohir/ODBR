@@ -49,16 +49,10 @@ public class ReplayService extends IntentService {
 
     class ReplayEvent implements Runnable {
         private long wait_before = 2000; //Milliseconds to wait before starting inputs
-        private long wait_after = 2000; //Milliseconds to wait after returning to report
+        private long wait_after = 2000; //Milliseconds to wait after executing inputs
         @Override
         public void run() {
             try {
-                Thread.sleep(wait_before);
-                long previousEventTime = BugReport.getInstance().getStartTime();
-                ArrayList<SendEventBundle> events = preprocessEvents();
-                long waitUntil = 0;
-
-                HashMap<String, DataOutputStream> devices = new HashMap<String, DataOutputStream>();
                 HashMap<String, DataOutputStream> procs = new HashMap<String, DataOutputStream>();
                 for (String device : getDevices()) {
                     //Grant permissions to directly write to device
@@ -71,7 +65,10 @@ public class ReplayService extends IntentService {
                     procs.put(device, dataOutputStream);
                 }
 
-                DataOutputStream out;
+                Thread.sleep(wait_before);
+                long previousEventTime = BugReport.getInstance().getStartTime();
+                ArrayList<SendEventBundle> events = preprocessEvents();
+                long waitUntil = 0;
                 for (SendEventBundle bundle : events) {
                     waitUntil = System.currentTimeMillis() + (bundle.timeMillis - previousEventTime);
                     while (System.currentTimeMillis() < waitUntil) {/* <(^_^)> */}
@@ -80,9 +77,6 @@ public class ReplayService extends IntentService {
                     }
                     procs.get(bundle.device).flush();
                     previousEventTime = bundle.timeMillis;
-                }
-                for (DataOutputStream outputStream : devices.values()) {
-                    outputStream.close();
                 }
                 os.close();
                 su_replay.waitFor();

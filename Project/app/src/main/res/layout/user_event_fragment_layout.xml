@@ -10,19 +10,15 @@
         android:id="@+id/userEventDescription"/>
 
     <FrameLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_below="@+id/userEventDescription"
         android:layout_centerHorizontal="true">
         <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:id="@+id/screenshot"
             android:src="@drawable/not_yet_implemented_blue"/>
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/canvas" />
     </FrameLayout>
 
 </RelativeLayout>

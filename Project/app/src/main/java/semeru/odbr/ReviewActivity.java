@@ -3,6 +3,7 @@ package semeru.odbr;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
@@ -24,7 +25,11 @@ import android.hardware.Sensor;
 import android.graphics.Canvas;
 import android.widget.ToggleButton;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Review Activity provides the user with a summary of their input events
@@ -69,7 +74,6 @@ public class ReviewActivity extends FragmentActivity {
         int buttonHeight = findViewById(R.id.submitButton).getHeight();
 
         Globals.availableHeightForImage = Globals.height - (titleHeight + toggleHeight + buttonHeight);
-
     }
 
 
@@ -94,7 +98,6 @@ public class ReviewActivity extends FragmentActivity {
 
 
     class UserEventPageAdapter extends FragmentStatePagerAdapter {
-
         private int count;
 
         public UserEventPageAdapter(FragmentManager manager) {
@@ -106,7 +109,7 @@ public class ReviewActivity extends FragmentActivity {
         public Fragment getItem(int position) {
             Fragment page = new UserEventFragment();
             Bundle args = new Bundle();
-            args.putInt(UserEventFragment.ARG_OBJECT, position);
+            args.putInt(UserEventFragment.ARG_POS, position);
             page.setArguments(args);
             return page;
         }
@@ -122,29 +125,41 @@ public class ReviewActivity extends FragmentActivity {
      * for each report event
      */
     public static class UserEventFragment extends Fragment {
-        public static final String ARG_OBJECT = "object";
-
+        public static final String ARG_POS = "position";
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-            int pos = getArguments().getInt(ARG_OBJECT);
+            int pos = getArguments().getInt(ARG_POS);
             int max = BugReport.getInstance().numEvents();
 
             View rootView = inflater.inflate(R.layout.user_event_fragment_layout, container, false);
             TextView eventDescription = (TextView) rootView.findViewById(R.id.userEventDescription);
+            ImageView screenshot = (ImageView) rootView.findViewById(R.id.screenshot);
+            Bitmap screenBitmap;
 
             ReportEvent e = BugReport.getInstance().getEventAtIndex(pos);
             eventDescription.setText("(" + (pos + 1) + "/" + max + ") " + e.getEventDescription());
 
-            ImageView screenshot = (ImageView) rootView.findViewById(R.id.screenshot);
-            Bitmap screenBitmap = e.getScreenshot().getBitmap();
+            screenBitmap = e.getScreenshot().getBitmap();
+
+            if (screenBitmap == null) {
+                // Probably an orientation change, check
+                int imageResource = getResources().getIdentifier(e.getScreenshot().getFilename(), null, getActivity().getPackageName());
+                if (imageResource == 0) {
+                    Log.e("ReviewActivity", "Could not find image for event!");
+                }
+                else {
+                    screenshot.setImageResource(imageResource);
+                    screenshot.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                }
+            }
 
             /**
              * If we have a screencap we are going to get the bitmap version of it and draw scaled
              * versions of our getEvent data onto it
              */
-            if (screenBitmap != null) {
+            else {
 
                 Canvas c = new Canvas(screenBitmap);
                 Paint color = new Paint();
@@ -171,11 +186,11 @@ public class ReviewActivity extends FragmentActivity {
                         c.drawLine(xStart, yStart, xEnd, yEnd, color);
                     }
                 }
-
                 int scaledWidth = (int) (screenBitmap.getWidth() * ((float) Globals.availableHeightForImage / (float) screenBitmap.getHeight()));
                 Bitmap bScaled = Bitmap.createScaledBitmap(screenBitmap, scaledWidth, Globals.availableHeightForImage, true);
                 screenshot.setImageBitmap(bScaled);
             }
+
             return rootView;
         }
 

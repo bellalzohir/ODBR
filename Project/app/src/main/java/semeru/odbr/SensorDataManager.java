@@ -6,6 +6,7 @@ import java.util.HashMap;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.util.Log;
 import android.view.OrientationEventListener;
 import android.content.Context;
 import android.hardware.Sensor;
@@ -18,9 +19,10 @@ import android.hardware.Sensor;
 public class SensorDataManager implements SensorEventListener {
 
     HashMap<Sensor, float[]> lastLoggedData = new HashMap<Sensor, float[]>();
+    OrientationLogger orientationLogger;
 
     public SensorDataManager(Context c) {
-        OrientationLogger ol = new OrientationLogger(c);
+        orientationLogger = new OrientationLogger(c);
     }
 
     /**
@@ -31,6 +33,7 @@ public class SensorDataManager implements SensorEventListener {
             Globals.sMgr.registerListener(this, s, (SensorManager.SENSOR_DELAY_NORMAL)*10);
             lastLoggedData.put(s, new float[] {});
         }
+        orientationLogger.enable();
     }
 
     /**
@@ -38,6 +41,7 @@ public class SensorDataManager implements SensorEventListener {
      */
     public void stopRecording() {
         Globals.sMgr.unregisterListener(this);
+        orientationLogger.disable();
     }
 
 
@@ -72,6 +76,7 @@ class OrientationLogger extends OrientationEventListener {
 
     @Override
     public void onOrientationChanged(int orientation) {
-        BugReport.getInstance().addOrientation(System.currentTimeMillis(), orientation);
+        Log.d("Orientation", "Changed to: " + orientation);
+        BugReport.getInstance().addOrientationChange(System.currentTimeMillis(), orientation);
     }
 }

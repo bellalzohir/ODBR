@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.os.Handler;
 import android.os.IBinder;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -57,6 +58,9 @@ public class RecordFloatingWidget extends Service {
         BugReport.getInstance().clearReport();
         gem = new GetEventManager();
         sdm = new SensorDataManager(this);
+
+        Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        BugReport.getInstance().setCurrentOrientation(display.getRotation());
     }
 
     /**

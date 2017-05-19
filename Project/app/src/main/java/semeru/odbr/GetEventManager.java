@@ -132,9 +132,9 @@ public class GetEventManager {
                     //of one report event, it finishes once we have a fingerUp that then has 0 fingers on the screen
                     if (fingerDown(getevent)) {
                         if (downCount == 0) {
-                            event.addScreenshot(sm.takeScreenshot());
+                            event.setScreenshot(sm.takeScreenshot());
                             try {
-                                event.addHierarchyDump(hdm.takeHierarchyDump());
+                                event.setHierarchyDump(hdm.takeHierarchyDump());
                             } catch (Exception e) {Log.e("GetEventManger", e.getMessage());}
                         }
                         ++downCount;

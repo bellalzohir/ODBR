@@ -122,6 +122,10 @@ class Screenshot {
 
     public Bitmap getBitmap() {
         File screenshotFile = new File(filename);
+        Log.d("ScreenshotManager", "File: " + filename + "|" + screenshotFile.exists());
+        if (!screenshotFile.exists()) {
+            return null;
+        }
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
         return BitmapFactory.decodeFile(screenshotFile.getAbsolutePath(), options).copy(Bitmap.Config.ARGB_8888, true);
