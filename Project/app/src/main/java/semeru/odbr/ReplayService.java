@@ -100,6 +100,7 @@ public class ReplayService extends IntentService {
                     }
                     previousEventTime = bundle.timeMillis;
                 }
+                releaseOrientation();
                 os.close();
                 su_replay.waitFor();
                 Thread.sleep(wait_after);
@@ -108,7 +109,6 @@ public class ReplayService extends IntentService {
                 e.printStackTrace();
                 replayUsingSendEvent();
             }
-            releaseOrientation();
 
             Intent record_intent = new Intent(ReplayService.this, ReportActivity.class);
             record_intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -150,6 +150,7 @@ public class ReplayService extends IntentService {
                 previousEventTime = bundle.timeMillis;
             }
             try {
+                releaseOrientation();
                 os.close();
                 su_replay.waitFor();
                 Thread.sleep(wait_after);
@@ -195,6 +196,7 @@ public class ReplayService extends IntentService {
             try {
                 os.write(("settings put system user_rotation " + orientation + " \n").getBytes("ASCII"));
                 os.flush();
+                Thread.sleep(500);
             } catch (Exception e) {
                 Log.e("ReplayService", "Could not change screen orientation to: " + orientation + "!");
             }
