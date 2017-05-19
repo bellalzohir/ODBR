@@ -196,7 +196,7 @@ public class ReplayService extends IntentService {
             try {
                 os.write(("settings put system user_rotation " + orientation + " \n").getBytes("ASCII"));
                 os.flush();
-                Thread.sleep(500);
+                Thread.sleep(2000);
             } catch (Exception e) {
                 Log.e("ReplayService", "Could not change screen orientation to: " + orientation + "!");
             }
