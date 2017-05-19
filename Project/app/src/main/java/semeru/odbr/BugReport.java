@@ -185,6 +185,9 @@ public class BugReport {
         Canvas c = new Canvas(b);
 
         SensorDataList data = sensorData.get(s);
+        if (data == null) {
+            return null;
+        }
         Paint color = new Paint();
         color.setColor(Color.BLACK);
         color.setStrokeWidth(5);
