@@ -45,32 +45,34 @@ public class ReportEventSerializer implements JsonSerializer<ReportEvent> {
         root.addProperty("event_start_time", src.getStartTime());
         root.addProperty("event_end_time", src.getStartTime() + src.getDuration());
 
-        JsonObject screenshot = new JsonObject();
-        screenshot.addProperty("title", src.getScreenshot().getFilename());
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        src.getScreenshot().getBitmap().compress(Bitmap.CompressFormat.PNG, 100, stream);
-        screenshot.addProperty("bitmap_string", Base64.encodeToString(stream.toByteArray(), Base64.DEFAULT));
-        root.add("screenshot", screenshot);
+        if (src.type == ReportEvent.TYPE_USER_EVENT) {
+            JsonObject screenshot = new JsonObject();
+            screenshot.addProperty("title", src.getScreenshot().getFilename());
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            src.getScreenshot().getBitmap().compress(Bitmap.CompressFormat.PNG, 100, stream);
+            screenshot.addProperty("bitmap_string", Base64.encodeToString(stream.toByteArray(), Base64.DEFAULT));
+            root.add("screenshot", screenshot);
 
-        JsonObject hierarchy = new JsonObject();
-        hierarchy.addProperty("title", src.getHierarchy().getFilename());
-        hierarchy.addProperty("text", readFileToString(src.getHierarchy().getFilename()));
-        root.add("hierarchy", hierarchy);
+            JsonObject hierarchy = new JsonObject();
+            hierarchy.addProperty("title", src.getHierarchy().getFilename());
+            hierarchy.addProperty("text", readFileToString(src.getHierarchy().getFilename()));
+            root.add("hierarchy", hierarchy);
 
-        JsonArray inputList = new JsonArray();
-        SparseArray<ArrayList<int[]>> inputCoords = src.getInputCoordinates();
-        for (int i = 0; i < inputCoords.size(); ++i) {
-            JsonArray input = new JsonArray();
-            for (int[] coords : inputCoords.get(i)) {
-                JsonArray coord = new JsonArray();
-                for (int c : coords) {
-                    coord.add(new JsonPrimitive(c));
+            JsonArray inputList = new JsonArray();
+            SparseArray<ArrayList<int[]>> inputCoords = src.getInputCoordinates();
+            for (int i = 0; i < inputCoords.size(); ++i) {
+                JsonArray input = new JsonArray();
+                for (int[] coords : inputCoords.get(i)) {
+                    JsonArray coord = new JsonArray();
+                    for (int c : coords) {
+                        coord.add(new JsonPrimitive(c));
+                    }
+                    input.add(coord);
                 }
-                input.add(coord);
+                inputList.add(input);
             }
-            inputList.add(input);
+            root.add("inputList", inputList);
         }
-        root.add("inputList", inputList);
 
         return root;
     }

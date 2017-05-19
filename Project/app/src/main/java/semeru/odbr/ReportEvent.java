@@ -72,12 +72,12 @@ public class ReportEvent {
         }
         else if (coords.valueAt(0).size() < 3) {
             int[] coord = coords.valueAt(0).get(0);
-            description += "User clicked at X:" + coord[0] + " |Y: " + coord[1];
+            description += "Click at X:" + coord[0] + " |Y: " + coord[1];
         }
         else {
             int[] start = coords.valueAt(0).get(0);
             int[] end = coords.valueAt(0).get(coords.valueAt(0).size() - 1);
-            description += "User swiped from X: " + start[0] + " |Y: " + start[1] + " | to X: " + end[0] + " |Y: " + end[1];
+            description += "Swipe from X: " + start[0] + " |Y: " + start[1] + " | to X: " + end[0] + " |Y: " + end[1];
         }
         return description;
     }
