@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
@@ -12,6 +13,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.Surface;
 import android.view.View;
 import android.view.Window;
 import android.widget.ImageView;
@@ -159,6 +161,12 @@ public class ReviewActivity extends FragmentActivity {
              */
             else {
                 screenBitmap = e.getScreenshot().getBitmap();
+                // Rotate screenshot to match canvas; getevent does not map properly otherwise
+                if (screenBitmap.getWidth() > screenBitmap.getHeight()) {
+                    Matrix matrix = new Matrix();
+                    matrix.postRotate(e.getOrientation() * 90);
+                    screenBitmap = Bitmap.createBitmap(screenBitmap, 0, 0, screenBitmap.getWidth(), screenBitmap.getHeight(), matrix, true);
+                }
                 Canvas c = new Canvas(screenBitmap);
                 Paint color = new Paint();
                 color.setStyle(Paint.Style.STROKE);
@@ -168,7 +176,6 @@ public class ReviewActivity extends FragmentActivity {
                 for (int trace = 0; trace < traces.size(); trace++) {
                     ArrayList<int[]> coords = traces.valueAt(trace);
                     color.setColor(BugReport.colors[trace % BugReport.colors.length]);
-
 
                     int x = scaleX(coords.get(0)[0]);
                     int y = scaleY(coords.get(0)[1]);
