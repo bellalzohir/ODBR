@@ -1,10 +1,17 @@
 package semeru.odbr;
 
 import android.app.IntentService;
+import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.graphics.PixelFormat;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.Surface;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.LinearLayout;
 
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
@@ -44,7 +51,7 @@ public class ReplayService extends IntentService {
         try {
             su_replay = Runtime.getRuntime().exec("su", null, null);
             os = su_replay.getOutputStream();
-            service.submit(new ReplayEvent());
+            service.submit(new ReplayEvent(this));
         } catch(Exception e){}
     }
 
@@ -52,6 +59,12 @@ public class ReplayService extends IntentService {
     class ReplayEvent implements Runnable {
         private long wait_before = 2000; //Milliseconds to wait before starting inputs
         private long wait_after = 2000; //Milliseconds to wait after executing inputs
+        private Context context;
+
+        public ReplayEvent(Context context) {
+            this.context = context;
+        }
+
         @Override
         public void run() {
             freezeOrientation();
@@ -74,7 +87,7 @@ public class ReplayService extends IntentService {
                 ArrayList<SendEventBundle> events = preprocessEvents();
                 long waitUntil = 0;
                 for (SendEventBundle bundle : events) {
-                    waitUntil = System.currentTimeMillis() + (bundle.timeMillis - previousEventTime);
+                    waitUntil = System.currentTimeMillis() + min(bundle.timeMillis - previousEventTime, 2000);
                     while (System.currentTimeMillis() < waitUntil) {/* <(^_^)> */}
                     if ("ORIENTATION".equals(bundle.device)) {
                         changeOrientation(bundle.orientation);
@@ -117,17 +130,22 @@ public class ReplayService extends IntentService {
             for (SendEventBundle bundle : events) {
                 waitUntil = System.currentTimeMillis() + min(bundle.timeMillis - previousEventTime, 2000);
                 while (System.currentTimeMillis() < waitUntil) {/* <(^_^)> */}
-                for (byte[] cmd : bundle.commands) {
+                if ("ORIENTATION".equals(bundle.device)) {
+                    changeOrientation(bundle.orientation);
+                }
+                else {
+                    for (byte[] cmd : bundle.commands) {
+                        try {
+                            os.write((new GetEvent(cmd).getSendEvent(bundle.device) + " \n").getBytes("ASCII"));
+                        } catch (Exception e) {
+                            Log.e("ReplayService", e.getMessage());
+                        }
+                    }
                     try {
-                        os.write((new GetEvent(cmd).getSendEvent(bundle.device) + " \n").getBytes("ASCII"));
+                        os.flush();
                     } catch (Exception e) {
                         Log.e("ReplayService", e.getMessage());
                     }
-                }
-                try {
-                    os.flush();
-                } catch (Exception e) {
-                    Log.e("ReplayService", e.getMessage());
                 }
                 previousEventTime = bundle.timeMillis;
             }
@@ -145,7 +163,12 @@ public class ReplayService extends IntentService {
          * Prevent accelerometer from affecting device orientation
          */
         public void freezeOrientation() {
-            Settings.System.putInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 0);
+            try {
+                os.write(("settings put system accelerometer_rotation 0 \n").getBytes("ASCII"));
+                os.flush();
+            } catch (Exception e) {
+                Log.e("ReplayService", "Could not freeze screen rotation!");
+            }
         }
 
         private long min(long a, long b) {
@@ -156,7 +179,12 @@ public class ReplayService extends IntentService {
          * Allow accelerometer to change orientation
          */
         public void releaseOrientation() {
-            Settings.System.putInt(getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 1);
+            try {
+                os.write(("settings put system accelerometer_rotation 1 \n").getBytes("ASCII"));
+                os.flush();
+            } catch (Exception e) {
+                Log.e("ReplayService", "Could not release screen orientation!");
+            }
         }
 
         /**
@@ -164,7 +192,12 @@ public class ReplayService extends IntentService {
          * @param orientation
          */
         public void changeOrientation(int orientation) {
-            Settings.System.putInt(getContentResolver(), Settings.System.USER_ROTATION, orientation);
+            try {
+                os.write(("settings put system user_rotation " + orientation + " \n").getBytes("ASCII"));
+                os.flush();
+            } catch (Exception e) {
+                Log.e("ReplayService", "Could not change screen orientation to: " + orientation + "!");
+            }
         }
 
         public String[] getDevices() {

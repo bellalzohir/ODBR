@@ -156,7 +156,7 @@ public class ReportActivity extends ActionBarActivity {
 
         try {
             GsonBuilder builder = new GsonBuilder();
-            builder.registerTypeAdapter(ReportEvent.class, new ReportEventSerializer());
+            builder.registerTypeAdapter(ReportEvent.class, new ReportEventSerializer(this));
             Gson gson = builder.setPrettyPrinting().create();
             String json = gson.toJson(BugReport.getInstance());
             AsyncHttpPut asyncHttpPut = new AsyncHttpPut(json);

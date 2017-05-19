@@ -1,6 +1,9 @@
 package semeru.odbr;
 
+import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.util.Base64;
 import android.util.SparseArray;
 
@@ -22,6 +25,11 @@ import java.util.ArrayList;
  * Created by Richard Bonett on 1/24/17.
  */
 public class ReportEventSerializer implements JsonSerializer<ReportEvent> {
+    private Context context;
+
+    public ReportEventSerializer(Context context) {
+        this.context = context;
+    }
 
     private String readFileToString(String path) {
         StringBuilder text = new StringBuilder();
@@ -72,6 +80,17 @@ public class ReportEventSerializer implements JsonSerializer<ReportEvent> {
                 inputList.add(input);
             }
             root.add("inputList", inputList);
+        }
+        else {
+            JsonObject screenshot = new JsonObject();
+            screenshot.addProperty("title", src.getScreenshot().getFilename().split("/")[1]);
+            int imageResource = this.context.getResources().getIdentifier(src.getScreenshot().getFilename(), null, this.context.getPackageName());
+            Drawable img = this.context.getResources().getDrawable(imageResource);
+            Bitmap bitmap = ((BitmapDrawable) img).getBitmap();
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            screenshot.addProperty("bitmap_string", Base64.encodeToString(stream.toByteArray(), Base64.DEFAULT));
+            root.add("screenshot", screenshot);
         }
 
         return root;
