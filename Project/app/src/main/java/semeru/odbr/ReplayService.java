@@ -4,6 +4,7 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.Surface;
 
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
@@ -159,11 +160,7 @@ public class ReplayService extends IntentService {
          * @param orientation
          */
         public void changeOrientation(int orientation) {
-            if (orientation == 90 || orientation == 270) {
-                // swap 90 and 270
-                orientation = (orientation + 180) % 360;
-            }
-            Settings.System.putInt(getContentResolver(), Settings.System.USER_ROTATION, orientation / 90);
+            Settings.System.putInt(getContentResolver(), Settings.System.USER_ROTATION, orientation);
         }
 
         public String[] getDevices() {

@@ -86,7 +86,7 @@ public class BugReport {
     public void addOrientationChange(long time, int orientation) {
         String orString;
         try {
-            orString = orientationStrings[orientation / 90];
+            orString = orientationStrings[orientation];
         } catch (Exception e) {
             Log.e("BugReport", "Could not match orientation '" + orientation + "': " + e.getMessage());
             return;
@@ -95,7 +95,7 @@ public class BugReport {
             this.orientation = orientation;
             return;
         }
-        if (orientationStrings[this.orientation / 90].equals(orString)) {
+        if (orientationStrings[this.orientation].equals(orString)) {
             return;
         }
         orientations.put(time, orientation);
@@ -105,9 +105,9 @@ public class BugReport {
         orientationChange.setStartTime(time);
         orientationChange.setEndTime(time + 100);
 
-        String descriptor = orientationStrings[this.orientation / 90] + "_to_" + orString;
+        String descriptor = orientationStrings[this.orientation] + "_to_" + orString;
         orientationChange.setScreenshot(new Screenshot("@drawable/" + descriptor));
-        orientationChange.setDescription("Rotate device from " + orientationStrings[this.orientation / 90] + " to " + orString);
+        orientationChange.setDescription("Rotate device from " + orientationStrings[this.orientation] + " to " + orString);
         addEvent(orientationChange);
 
         this.orientation = orientation;

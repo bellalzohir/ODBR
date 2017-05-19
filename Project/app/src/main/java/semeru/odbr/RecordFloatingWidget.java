@@ -3,6 +3,7 @@ package semeru.odbr;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.BitmapDrawable;
@@ -13,6 +14,7 @@ import android.renderscript.Allocation;
 import android.renderscript.Element;
 import android.renderscript.RenderScript;
 import android.renderscript.ScriptIntrinsicBlur;
+import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -42,6 +44,8 @@ public class RecordFloatingWidget extends Service {
 
     private SensorDataManager sdm;
     private GetEventManager gem;
+    private boolean recording;
+    private Display display;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -61,7 +65,7 @@ public class RecordFloatingWidget extends Service {
         BugReport.getInstance().clearReport();
         gem = new GetEventManager();
         sdm = new SensorDataManager(this);
-        Display display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        display = ((WindowManager) getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         BugReport.getInstance().setStartOrientation(display.getRotation());
 
         // Short wait for gem / sdm startup
@@ -77,6 +81,15 @@ public class RecordFloatingWidget extends Service {
         inflater.inflate(R.layout.floating_widget_layout, ll);
         ll.setBackgroundColor(0xA0000000);
         wm.addView(ll, parameters);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration conf) {
+        Log.d("RFW", "Orientation: " + BugReport.getInstance().getCurrentOrientation() + " | " + display.getRotation());
+        if (recording && BugReport.getInstance().getCurrentOrientation() != display.getRotation()) {
+            BugReport.getInstance().addOrientationChange(System.currentTimeMillis(), display.getRotation());
+            Globals.event_active = true;
+        }
     }
 
     /**
@@ -121,6 +134,7 @@ public class RecordFloatingWidget extends Service {
      * @param view
      */
     public void recordEvents(View view){
+        recording = true;
         gem.startRecording();
         sdm.startRecording();
         hideOverlay();
@@ -134,6 +148,7 @@ public class RecordFloatingWidget extends Service {
         handler.post(new Runnable() {
             @Override
             public void run() {
+                recording = false;
                 sdm.stopRecording();
                 gem.pauseRecording();
             }
